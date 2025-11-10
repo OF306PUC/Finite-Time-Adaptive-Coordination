@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consensus UI</title>
+  <script src="https://cdn.plot.ly/plotly-1.58.5.min.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+</head>
+<body>
+
+  <!-- For going to data history -->
+  <a href="data.html" target="_blank">Open data history in a new window</a>
+  <br>
+  <a href="single.html" target="_blank">Or in a single graph</a>
+  <br>
+
+  <!-- For plotting real time data -->
+  <div id="statePlot" style="height: 400px; width: 100%"></div>
+  <div id="vstatePlot" style="height: 400px; width: 100%"></div>
+  <div id="varthetaPlot" style="height: 400px; width: 100%"></div>
+  <br>
+  <script src="update-plot.js"></script>
+
+  <!-- For updating server params -->
+  <div>
+    <button onclick="updateParams()">Update Params</button>
+    <form id="paramsForm"></form>
+  </div>
+  <br>
+  <script src="update-params.js"></script>
+
+</body>
+</html>

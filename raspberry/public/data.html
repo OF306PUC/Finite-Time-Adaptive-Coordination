@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plotly Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+  <!-- Dropdown for selecting the directory -->
+  <select id="dropdown">
+    <option value="" disabled selected>Select a directory</option>
+  </select>
+
+  <!-- Plot for displaying the state, vstate and vartheta results of that directory -->
+  <div id="statePlot"></div>
+  <div id="vstatePlot"></div>
+  <div id="varthetaPlot"></div>
+
+  <script src="update-data.js"></script>
+
+</body>
+</html>
