@@ -22,14 +22,6 @@ app.use(express.json());
 
 // Store data in RAM for consensus parameters/variables
 let params = { trigger: false }; 
-/**
- * params = {
- * trigger: false, filename: 'temp', node: 1, address: `http://192.168.1.126:${BLE_PORT}`,
- * neighborAddresses: {2: `http://192.168.1.126:${BLE_PORT}`, 3: `http://192.168.1.127:${BLE_PORT}`, 7: `http://192.168.1.123:${BRIDGE_PORT}`},
- * type: TYPE_BLE, enabled: true, neighbors: [2,3,7], clock: 1000, state: 100, vstate: 50, vartheta: 0, eta: 1,
- * neighborTypes: {2: TYPE_BLE, 3: TYPE_BLE, 7: TYPE_BRIDGE},
- * }
- */
 
 // Backend Process: 
 // --> Spawn edge-process
