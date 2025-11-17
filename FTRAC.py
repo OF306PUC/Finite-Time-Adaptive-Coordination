@@ -329,7 +329,7 @@ def simulate_sampled_dynamics_euler(params, init_conditions, sample_time=0.2):
 
         # Euler integration step
         dydt = dyn2sample(t, y, v, nu[:, k], n_agents, dvthetas, params, sample_points)
-        y = y + dt * dydt
+        y = np.maximum(y + dt * dydt, 0)
         t += dt
 
     return xs, zs, vthetas, dvthetas, sample_points

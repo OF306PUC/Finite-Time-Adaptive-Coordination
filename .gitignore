@@ -4,3 +4,4 @@ raspberry/package-lock.json
 raspberry/python/__pycache__/
 raspberry/python/data/
 __pycache__/
+.venv/
