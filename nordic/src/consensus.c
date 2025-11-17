@@ -48,6 +48,12 @@ float v_i(consensus_params* cp) {
     return vi;
 }
 
+float laplacian(consensus_params* cp){
+    float x_f = (float)(cp->state * cp->inv_scale_factor);
+    float lap = 0.0f;
+    return lap;
+}
+
 void update_consensus(consensus_params* cp) {
     float dt = (float)(cp->dt) * 1e-3f; // Convert ms to seconds
     float x = (float)(cp->state * cp->inv_scale_factor);

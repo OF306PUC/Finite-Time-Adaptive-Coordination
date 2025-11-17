@@ -67,6 +67,7 @@ float sign(float x);
 float max_of_two_non_negative_f(float a, float b);
 float disturbance(consensus_params* cp);
 float v_i(consensus_params* cp);
+float laplacian(consensus_params* cp)
 void update_consensus(consensus_params* cp);
 
 

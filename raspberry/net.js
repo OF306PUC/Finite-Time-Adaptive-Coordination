@@ -142,8 +142,8 @@ function createNodes(topologyConfig) {
     }
 
     const csvPath = path.join(dataDir, 'initial_conditions.csv');
-    const csvHeader = 'id,type,state,vstate,enable\n';
-    const csvRows = initialConditions.map(ic => `${ic.id},${ic.type},${ic.state},${ic.vstate},${ic.enabled}`).join('\n');
+    const csvHeader = 'id,type,state,vstate\n';
+    const csvRows = initialConditions.map(ic => `${ic.id},${ic.type},${ic.state},${ic.vstate}`).join('\n');
     fs.writeFileSync(csvPath, csvHeader + csvRows);
     console.log(`Initial conditions saved to ${csvPath}`);
 
