@@ -30,9 +30,9 @@ typedef struct {
  * Custom type to store consensus parameters sent by user through UART
  */
 typedef struct {
-    bool running; 
-    bool enabled; 
-    bool first_time_running; 
+    bool running;                      // whether the consensus algorithm is running or not
+    bool enabled;                      // whether the consensus algorithm is enabled or not
+    bool first_time_running;           // to initialize time0
     bool all_neighbors_observed; 
     bool* available_neighbors; 
     uint8_t node; 
@@ -46,7 +46,9 @@ typedef struct {
     int32_t state0; 
     int32_t vstate0; 
     int32_t vartheta0;
-    int32_t eta; 
+    int32_t alpha;          // control gain (discrete time)
+    int32_t eta;    
+    int32_t delta;          // threshold for vartheta update (discrete time)
     int32_t state; 
     int32_t vstate;
     int32_t vartheta;
@@ -67,7 +69,8 @@ float sign(float x);
 float max_of_two_non_negative_f(float a, float b);
 float disturbance(consensus_params* cp);
 float v_i(consensus_params* cp);
-float laplacian(consensus_params* cp)
+float g_i(consensus_params* cp); 
+void discrete_step(consensus_params* cp);
 void update_consensus(consensus_params* cp);
 
 

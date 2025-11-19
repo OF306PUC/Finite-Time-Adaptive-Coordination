@@ -36,6 +36,9 @@ float max_of_two_non_negative_f(float a, float b) {
     return fmaxf(0.0f, max_val); 
 }
 
+/**
+ * Javier's coordination control law: g_i(z_i, v_i)
+ */
 float v_i(consensus_params* cp) {
     float vstate_f = (float)(cp->vstate * cp->inv_scale_factor);
     float vi = 0.0f;
@@ -48,10 +51,53 @@ float v_i(consensus_params* cp) {
     return vi;
 }
 
-float laplacian(consensus_params* cp){
+/**
+ * Consensus average control law: g_i(z_i, v_i)
+ * - Assumes strongly connected and balanced graph to reach average consensus
+ */
+float g_i(consensus_params* cp){
     float x_f = (float)(cp->state * cp->inv_scale_factor);
-    float lap = 0.0f;
-    return lap;
+    float vi = 0.0f; 
+    for (int j = 0; j < cp->N; j++) {
+        if (cp->neighbor_enabled[j]) {
+            float diff = x_f - (float)(cp->neighbor_vstates[j] * cp->inv_scale_factor);
+            vi += -1.0f * diff;
+        }
+    }
+    return vi;
+}
+
+void discrete_step(consensus_params* cp) {
+    /**
+     * Intended to be run at the same frequency as the fetching of neighbor states
+     * No time scaling is applied here. 
+     */
+    float x = (float)(cp->state * cp->inv_scale_factor);
+    float z = (float)(cp->vstate * cp->inv_scale_factor);
+    float vartheta = (float)(cp->vartheta * cp->inv_scale_factor);
+
+    float eta = (float)(cp->eta * cp->inv_scale_factor);        // eta = 1e-6f
+    float alpha = (float)(cp->alpha * cp->inv_scale_factor);    // alpha = 1e-1f
+
+    float delta = (float)(cp->delta * cp->inv_scale_factor);    // delta = 1e-2f
+
+    float nu = disturbance(cp); // * sclaing_disturbance: max(d_i) = 2e-3; 
+    float sigma = x - z;
+    float grad = sign(sigma);
+    
+    float gi = alpha * g_i(cp); // if (average consensus law) else v_i(cp) if (Javier's law)
+    float u = gi - vartheta * grad;
+
+    float dvtheta = 0.0f; 
+    if ((float)(fabs(sigma)) > cp->delta) {
+        dvtheta = 1.0f; 
+    } else {
+        dvtheta = 0.0f; 
+    }
+
+    cp->state = (int32_t)(max_of_two_non_negative_f(x + u + nu, 0.0f) * cp->scale_factor);
+    cp->vstate = (int32_t)(max_of_two_non_negative_f(z + gi , 0.0f) * cp->scale_factor);
+    cp->vartheta = (int32_t)(max_of_two_non_negative_f(vartheta + eta * dvtheta , 0.0f) * cp->scale_factor);
 }
 
 void update_consensus(consensus_params* cp) {

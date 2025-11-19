@@ -349,12 +349,12 @@ utils_plot.plot_hysteresis_and_sign_function(x, z, dvtheta, params, agent=1)
 #%% Discrete simulation: 
 def simulate_discrete_dynamics(params, init_conditions):
 
+    # Synchronous dynamics - fetching
     n_points = params["n_points"]
     n_agents = params["n_agents"]
     alpha = params["alpha"]
     eta = params["eta_discrete"]
     d_scale = params["disturbance"]
-
     delta = params["delta"]
 
     # Full trajectories
@@ -383,7 +383,7 @@ def simulate_discrete_dynamics(params, init_conditions):
         for i in range(n_agents): 
             neighbors = NODES[i+1]['neighbors']
             neighbors_idx = [n-1 for n in neighbors]
-            g[i] = cl.gi(i, z[:, k], neighbors_idx, alpha)
+            g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha)
 
             if np.abs(sigma[i]) > delta:
                 dvtheta[i] = 1.0
