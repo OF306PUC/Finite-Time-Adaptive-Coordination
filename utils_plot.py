@@ -53,8 +53,6 @@ def plot_simulation(t, x, z, vartheta, params):
             if i == 0:
                 axs[0].plot(t, z[i,:], color=ref_color, linestyle='--', label=f'$z_{{{i+1}}}$ (ref.)')
     
-    z_avg = np.mean(z[:,0]) * np.ones_like(t)
-    axs[0].plot(t, z_avg, '--k', label='$\\overline{z}$')
     axs[0].set_title('States $x_i$')
     axs[0].set_xlabel('Time (s)')
     axs[0].set_ylabel('$x(t)$')
@@ -78,7 +76,7 @@ def plot_simulation(t, x, z, vartheta, params):
     plt.tight_layout()
     plt.show()
 
-def plot_states(t, x, z, n_agents, ref_state_num=1):
+def plot_states(t, x, z, params, ref_state_num=1):
     """
     Plot x and z states for all agents.
     
@@ -88,6 +86,8 @@ def plot_states(t, x, z, n_agents, ref_state_num=1):
     - n_agents: number of agents
     - save_path: path to save figure (optional)
     """
+    n_agents = params["n_agents"]
+
     # Trim last time step (if necessary)
     t = t[:-1]
     x = x[:,:-1]
@@ -99,8 +99,7 @@ def plot_states(t, x, z, n_agents, ref_state_num=1):
             axs[0].plot(t, x[i,:], linestyle='-', label=f'$x_{{{i+1}}}$')
         else:
             axs[0].plot(t, x[i,:])
-    z_avg = np.mean(z[:,0]) * np.ones_like(t)
-    axs[0].plot(t, z_avg, '--k', label='$\\overline{z}$')
+
     axs[0].plot(t, z[ref_state_num-1,:], color='black', linestyle=':', linewidth=2.25, label=f'$z_{{{ref_state_num}}}$ (ref.)')
     axs[0].set_title('States $x_i$')
     axs[0].set_xlabel('Time (s)')
@@ -113,7 +112,8 @@ def plot_states(t, x, z, n_agents, ref_state_num=1):
             axs[1].plot(t, z[i,:], linestyle='-', label=f'$z_{{{i+1}}}$')
         else:
             axs[1].plot(t, z[i,:])
-
+    
+    z_avg = np.mean(z[:,0]) * np.ones_like(t)
     axs[1].plot(t, z_avg, '--k', label='$\\overline{z}$')
     axs[1].set_title('Reference states $z_i$')
     axs[1].set_xlabel('Time (s)')

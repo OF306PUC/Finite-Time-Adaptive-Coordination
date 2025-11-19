@@ -37,6 +37,14 @@ NODES = {
     30: {'x0': np.random.uniform(0,10), 'z0': np.random.uniform(0,10), 'neighbors': [29]},
 }
 
+# NODES = {
+#     1:  {'x0': np.random.uniform(0,10), 'z0': np.random.uniform(0,10), 'neighbors': [2,3]},
+#     2:  {'x0': np.random.uniform(0,10), 'z0': np.random.uniform(0,10), 'neighbors': [1,4] },
+#     3:  {'x0': np.random.uniform(0,10), 'z0': np.random.uniform(0,10), 'neighbors': [1,4] },
+#     4:  {'x0': np.random.uniform(0,10), 'z0': np.random.uniform(0,10), 'neighbors': [2,3] },
+# }
+
+
 if __name__ == "__main__":
     G = nx.DiGraph()
     for node, props in NODES.items():
