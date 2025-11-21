@@ -31,6 +31,7 @@ typedef struct {
  * - TODO: change the name since it is not only consensus anymore, could be any coordination task
  */
 typedef struct {
+    bool discrete_time;                // whether the consensus algorithm is in discrete time or continuous time (Euler integration) **(NEW)
     bool running;                      // whether the consensus algorithm is running or not
     bool enabled;                      // whether the consensus algorithm is enabled or not
     bool first_time_running;           // to initialize: first broadcasting, observing, timer start
@@ -47,9 +48,9 @@ typedef struct {
     int32_t state0;                    // initial state
     int32_t vstate0;                   // initial vstate
     int32_t vartheta0;                 // initial vartheta
-    int32_t alpha;                     // coordination task control gain (discrete time) --> vstates: z
+    int32_t alpha;                     // coordination task control gain (discrete time) --> vstates: z **(NEW)
     int32_t eta;                       // adaptation gain for vartheta 
-    int32_t delta;                     // threshold for vartheta update (discrete time)
+    int32_t delta;                     // threshold for vartheta update (discrete time) **(NEW)
     int32_t state;                     // current state
     int32_t vstate;                    // current vstate
     int32_t vartheta;                  // current vartheta

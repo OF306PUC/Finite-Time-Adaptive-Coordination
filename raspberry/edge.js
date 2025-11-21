@@ -50,8 +50,9 @@ if (TYPE == TYPE_BLE) {
         // (1) Network params: { enabled, node, neighbors } --> 'n'
         const msgNetwork = `n${params.enabled ? 1 : 0},${params.node},${params.neighbors.join(',')}\n\r`;
         // >>> Split in two messages to avoid overflow in nordic uart buffer (defined as 64 bytes) <<<
-        // (2.1) Consensus Algorithm params updated to: { clock, dt, state, vstate, vartheta, eta } --> 'a'
-        const msgConsensus = `a${params.clock},${params.dt},${params.state},${params.vstate},${params.vartheta},${params.eta}\n\r`; 
+        // (2.1) Consensus Algorithm params updated to: { clock, dt, state, vstate, vartheta, eta, alpha, delta, discrete_time } --> 'a'
+        const msgConsensus = `a${params.clock},${params.dt},${params.state},${params.vstate},${params.vartheta},${params.eta},${params.alpha},`+
+        `${params.delta},${params.discrete_time ? 1 : 0}\n\r`; 
         // (2.2) Consensus Disturbance params update to : { amplitude, offset, beta, A, f, phi, N_samples } --> 'p'
         const msgDisturbance = `p${params.disturbance.disturbance_on ? 1 : 0},${params.disturbance.amplitude},${params.disturbance.offset},` +
             `${params.disturbance.beta},${params.disturbance.Amp},${params.disturbance.frequency},${params.disturbance.phase},` +

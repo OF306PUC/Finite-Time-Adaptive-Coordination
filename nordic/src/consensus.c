@@ -10,15 +10,16 @@ static int32_t neighbor_vstates[N_MAX_NEIGHBORS] = {0};
 consensus_params consensus; 
 
 void consensus_init(void) {
+    consensus.discrete_time          = true;
     consensus.running                = false;                  
     consensus.enabled                = false;                 
-    consensus.first_time_running     = true;                   
+    consensus.first_time_running     = true;                    // always true at the begging of the execution              
     consensus.all_neighbors_observed = false;                 
     consensus.available_neighbors    = available_neighbors;    
     consensus.node                   = 0;                     
     consensus.neighbors              = neighbors;              
-    consensus.scale_factor           = 1e6f;                  
-    consensus.inv_scale_factor       = 1e-6f;                
+    consensus.scale_factor           = 1e6f;                    // must be the same as in raspberry/algo.js      
+    consensus.inv_scale_factor       = 1e-6f;                   // must be the same as in raspberry/algo.js      
     consensus.N                      = 0;                  
     consensus.time0                  = 0;                
     consensus.Ts                     = 0;                   
@@ -33,8 +34,8 @@ void consensus_init(void) {
     consensus.vstate                 = 0;               
     consensus.vartheta               = 0;             
     consensus.active                 = 0;               
-    consensus.epsilonON              = 0.0f;         
-    consensus.epsilonOFF             = 0.0f;        
+    consensus.epsilonON              = 0.01f;                   // must be the same as in raspberry/algo.js         
+    consensus.epsilonOFF             = 0.05f;                   // must be the same as in raspberry/algo.js
     consensus.neighbor_enabled       = neighbor_enabled;       
     consensus.neighbor_vstates       = neighbor_vstates;      
     consensus.disturbance            = (disturbance_params){false, 0, 0, 0, 0, 0, 0, 0, 0};  
@@ -116,12 +117,12 @@ void discrete_step(consensus_params* cp) {
     float z = (float)(cp->vstate * cp->inv_scale_factor);
     float vartheta = (float)(cp->vartheta * cp->inv_scale_factor);
 
-    float eta = (float)(cp->eta * cp->inv_scale_factor);        // eta = 1e-6f
-    float alpha = (float)(cp->alpha * cp->inv_scale_factor);    // alpha = 1e-1f
+    float eta = (float)(cp->eta * cp->inv_scale_factor);      
+    float alpha = (float)(cp->alpha * cp->inv_scale_factor);   
 
-    float delta = (float)(cp->delta * cp->inv_scale_factor);    // delta = 1e-2f
+    float delta = (float)(cp->delta * cp->inv_scale_factor);   
 
-    float nu = disturbance(cp); // * sclaing_disturbance: max(d_i) = 2e-3; 
+    float nu = disturbance(cp); 
     float sigma = x - z;
     float grad = sign(sigma);
     
@@ -129,7 +130,7 @@ void discrete_step(consensus_params* cp) {
     float u = gi - vartheta * grad;
 
     float dvtheta = 0.0f; 
-    if ((float)(fabs(sigma)) > cp->delta) {
+    if ((float)(fabs(sigma)) > delta) {
         dvtheta = 1.0f; 
     } else {
         dvtheta = 0.0f; 
@@ -138,6 +139,7 @@ void discrete_step(consensus_params* cp) {
     cp->state = (int32_t)(max_of_two_non_negative_f(x + u + nu, 0.0f) * cp->scale_factor);
     cp->vstate = (int32_t)(max_of_two_non_negative_f(z + gi , 0.0f) * cp->scale_factor);
     cp->vartheta = (int32_t)(max_of_two_non_negative_f(vartheta + eta * dvtheta , 0.0f) * cp->scale_factor);
+    cp->disturbance.counter = (cp->disturbance.counter + 1) % cp->disturbance.samples;
 }
 
 void update_consensus(consensus_params* cp) {

@@ -35,8 +35,8 @@ static struct k_sem dynamics_sem; // Semaphore for 1ms clocking
  */
 static void leds_init(void);                          // Auxiliary function for starting LEDs
 static void bt_init(void);                            // Auxiliary function for starting Bluetooth
-static void fast_dynamics_thread(void);               // Dedicated thread for 1ms dynamics
-static void slow_network_thread(void);                // Slow network/logging thread (body of original thread_consensus)
+static void dynamics_thread(void);                    // Dedicated thread for 1ms dynamics (if not discrete time)
+static void network_fetching_thread(void);            // Slow network/logging thread (body of original thread_consensus)
 static void dynamics_timer_cb(struct k_timer *dummy); // High-frequency dynamics timer callback
 /*
  * -------------------------------------------------------------------------------------
@@ -111,13 +111,18 @@ static void dynamics_timer_cb(struct k_timer *dummy) {
  * --- DEDICATED FAST AGENT DYNAMICS THREAD ---
  * Runs when signaled by the timer semaphore (P=5).
  */
-static void fast_dynamics_thread(void) {
+static void dynamics_thread(void) {
     while (1) {
         k_sem_take(&dynamics_sem, K_FOREVER);
 
         k_mutex_lock(&consensus_mutex, K_FOREVER);
         if (consensus.running && consensus.enabled) {
-            update_consensus(&consensus);
+            if (!consensus.discrete_time) {
+                discrete_step(&consensus);
+            } else {
+                update_consensus(&consensus);
+            }
+            
             custom_data_type custom_data = {
                 MANUFACTURER_ID,
                 consensus.enabled ? NETID_ENABLED : NETID_DISABLED,
@@ -134,7 +139,7 @@ static void fast_dynamics_thread(void) {
  * --- SLOW NETWORK/LOGGING LOOP (Thread) ---
  * Runs periodically/blocking for network I/O and serial logging (P=7).
  */
-static void slow_network_thread(void) {
+static void network_fetching_thread(void) {
     /**
      * This should be done using a timer too
      */
@@ -152,7 +157,14 @@ static void slow_network_thread(void) {
                 };
                 broadcaster_init(&initial_data);
                 observer_init();
-                k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.dt));
+                
+                // Start dynamics timer based on discrete_time flag
+                if (!consensus.discrete_time) {
+                    k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.dt));
+                } else {
+                    k_timer_start(&dynamics_timer, K_SEC(0), K_MSEC(consensus.Ts));
+                }
+
                 consensus.first_time_running = false;
             }
 
