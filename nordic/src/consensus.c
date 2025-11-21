@@ -1,6 +1,46 @@
 #include <math.h>
 #include "consensus.h"
 
+
+static bool available_neighbors[N_MAX_NEIGHBORS] = {false};
+static bool neighbor_enabled[N_MAX_NEIGHBORS] = {false};
+static uint8_t neighbors[N_MAX_NEIGHBORS] = {0};
+static int32_t neighbor_vstates[N_MAX_NEIGHBORS] = {0};
+
+consensus_params consensus; 
+
+void consensus_init(void) {
+    consensus.running                = false;                  
+    consensus.enabled                = false;                 
+    consensus.first_time_running     = true;                   
+    consensus.all_neighbors_observed = false;                 
+    consensus.available_neighbors    = available_neighbors;    
+    consensus.node                   = 0;                     
+    consensus.neighbors              = neighbors;              
+    consensus.scale_factor           = 1e6f;                  
+    consensus.inv_scale_factor       = 1e-6f;                
+    consensus.N                      = 0;                  
+    consensus.time0                  = 0;                
+    consensus.Ts                     = 0;                   
+    consensus.dt                     = 0;                   
+    consensus.state0                 = 0;               
+    consensus.vstate0                = 0;              
+    consensus.vartheta0              = 0;            
+    consensus.alpha                  = 0;                
+    consensus.eta                    = 0;                  
+    consensus.delta                  = 0;                
+    consensus.state                  = 0;                
+    consensus.vstate                 = 0;               
+    consensus.vartheta               = 0;             
+    consensus.active                 = 0;               
+    consensus.epsilonON              = 0.0f;         
+    consensus.epsilonOFF             = 0.0f;        
+    consensus.neighbor_enabled       = neighbor_enabled;       
+    consensus.neighbor_vstates       = neighbor_vstates;      
+    consensus.disturbance            = (disturbance_params){false, 0, 0, 0, 0, 0, 0, 0, 0};  
+}
+
+
 float disturbance(consensus_params* cp) {
     float nu = 0.0f;
     if (!cp->disturbance.disturbance_on) {

@@ -27,43 +27,49 @@ typedef struct {
 } disturbance_params;
 
 /**
- * Custom type to store consensus parameters sent by user through UART
+ * Custom type to store consensus parameters sent by user through UART 
+ * - TODO: change the name since it is not only consensus anymore, could be any coordination task
  */
 typedef struct {
     bool running;                      // whether the consensus algorithm is running or not
     bool enabled;                      // whether the consensus algorithm is enabled or not
-    bool first_time_running;           // to initialize time0
-    bool all_neighbors_observed; 
-    bool* available_neighbors; 
-    uint8_t node; 
-    uint8_t* neighbors; 
-    float scale_factor; 
-    float inv_scale_factor; 
-    uint8_t N; 
-    int64_t time0; 
-    int32_t Ts; 
-    int32_t dt; 
-    int32_t state0; 
-    int32_t vstate0; 
-    int32_t vartheta0;
-    int32_t alpha;          // control gain (discrete time)
-    int32_t eta;    
-    int32_t delta;          // threshold for vartheta update (discrete time)
-    int32_t state; 
-    int32_t vstate;
-    int32_t vartheta;
-    uint8_t active; 
-    float epsilonON;
-    float epsilonOFF; 
-    bool* neighbor_enabled; 
-    int32_t* neighbor_vstates;
-    disturbance_params disturbance;
+    bool first_time_running;           // to initialize: first broadcasting, observing, timer start
+    bool all_neighbors_observed;       // to check if all neighbors have been observed at least once
+    bool* available_neighbors;         // array to track which neighbors have been observed
+    uint8_t node;                      // node ID
+    uint8_t* neighbors;                // array of neighbor IDs
+    float scale_factor;                // scaling factor for fixed-point representation: 1.0f --> (uint32_t) 1e6
+    float inv_scale_factor;            // inverse of the scaling factor: (uint32_t) 1e6 --> 1.0f
+    uint8_t N;                         // number of neighbors
+    int64_t time0;                     // internal clock time0   
+    int32_t Ts;                        // network fetching period (ms)
+    int32_t dt;                        // dynamics timer and integration step (if Euler Solver is used) (ms)
+    int32_t state0;                    // initial state
+    int32_t vstate0;                   // initial vstate
+    int32_t vartheta0;                 // initial vartheta
+    int32_t alpha;                     // coordination task control gain (discrete time) --> vstates: z
+    int32_t eta;                       // adaptation gain for vartheta 
+    int32_t delta;                     // threshold for vartheta update (discrete time)
+    int32_t state;                     // current state
+    int32_t vstate;                    // current vstate
+    int32_t vartheta;                  // current vartheta
+    uint8_t active;                    // (hysteresis rule) whether the adaptation is active or not
+    float epsilonON;                   // threshold to turn ON the adaptation
+    float epsilonOFF;                  // threshold to turn OFF the adaptation
+    bool* neighbor_enabled;            // array to track which neighbors are enabled
+    int32_t* neighbor_vstates;         // array to store neighbor vstates
+    disturbance_params disturbance;    // disturbance parameters
 } consensus_params;
 
 /**
  * Global consensus parameters instance
  */
 extern consensus_params consensus;
+
+/**
+ * TODO: change the name since it is not only consensus anymore, could be any coordination task
+ */
+void consensus_init(void); 
 
 float sign(float x);
 float max_of_two_non_negative_f(float a, float b);

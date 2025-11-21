@@ -11,41 +11,6 @@
 // Register the logger for this module
 LOG_MODULE_REGISTER(Module_Serial, LOG_LEVEL_INF);
 
-static bool available_neighbors[N_MAX_NEIGHBORS] = {false};
-static bool neighbor_enabled[N_MAX_NEIGHBORS] = {false};
-static uint8_t neighbors[N_MAX_NEIGHBORS] = {1};
-static int32_t neighbor_vstates[N_MAX_NEIGHBORS] = {50};
-
-// Consensus parameters structure (using global scope for access in all functions)
-consensus_params consensus = {
-    false,                  // running
-    false,                  // enabled  
-    true,                   // first_time_running
-    false,                  // all_neighbors_observed
-    available_neighbors,    // avaliable_neighbors
-    0,                      // node
-    neighbors,              // neigbors
-    1e6f,                   // scale_factor
-    1e-6f,                  // inv_scale_factor
-    1,                      // number of neighbors = N
-    0,                      // time0 (internal clock time)
-    1000,                   // period of the consensus task
-    1000,                   // "dt": integration step 
-    100,                    // initial state
-    50,                     // initial vstate
-    0,                      // initial vartheta
-    0,                      // eta
-    100,                    // state 
-    50,                     // vstate
-    1,                      // vartheta
-    0,                      // active boolean
-    0.050f,                 // epsilonON
-    0.010f,                 // epsilonOFF
-    neighbor_enabled,       // neighbor enabled
-    neighbor_vstates,       // neighbor vstates
-    {false, 0, 0, 0, 0, 0, 0, 0, 0}  // disturbance parameters
-};  
-
 /**
  * Device pointer to the UART hardware
  */
@@ -148,6 +113,7 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                             break; 
 
                         // When receiving consensus trigger type: 't'
+                        // Explicitly start/stop the consensus algorithm (reset of initial conditions)
                         case 't': 
                             if (msg_buffer[1] != '0') {
                                 consensus.running = true; 

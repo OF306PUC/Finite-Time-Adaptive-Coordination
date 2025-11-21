@@ -61,6 +61,7 @@ K_THREAD_DEFINE(thread_consensus_id, APP_STACK_SIZE, slow_network_thread,
 int main(void) {
     int blink_status = 0;
 
+    consensus_init(); // Initialize consensus parameters
     leds_init();
     bt_init();
     serial_init();
@@ -134,6 +135,9 @@ static void fast_dynamics_thread(void) {
  * Runs periodically/blocking for network I/O and serial logging (P=7).
  */
 static void slow_network_thread(void) {
+    /**
+     * This should be done using a timer too
+     */
     static consensus_params log_data_copy;
     static neighbor_info_type neighbor_info;
 

@@ -257,7 +257,7 @@ def simulate_sampled_dynamics(params, init_conditions, sample_time=0.2):
                 for i in range(n_agents):
                     neighbors = params["nodes"][i+1]['neighbors']
                     neighbors_index = [n-1 for n in neighbors]
-                    v[i] = vi(i, z[:, k], neighbors_index)
+                    v[i] = cl.gi(i, z[:, k], neighbors_index)
 
             # Store sampled trajectories
             sample_idx = k // sample_interval
@@ -383,7 +383,7 @@ def simulate_discrete_dynamics(params, init_conditions):
         for i in range(n_agents): 
             neighbors = NODES[i+1]['neighbors']
             neighbors_idx = [n-1 for n in neighbors]
-            g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha)
+            g[i] = cl.gi(i, z[:, k], neighbors_idx, alpha)
 
             if np.abs(sigma[i]) > delta:
                 dvtheta[i] = 1.0
@@ -391,8 +391,8 @@ def simulate_discrete_dynamics(params, init_conditions):
                 dvtheta[i] = 0.0
 
         u = g - vartheta[:, k] * grad
-        xNew = x[:, k] + u + nu[:, k] * d_scale
-        zNew = z[:, k] + g
+        xNew = x[:, k] + u + nu[:, k] * d_scale + dt*10
+        zNew = z[:, k] + g + dt*10
         varthetaNew = vartheta[:, k] + eta * dvtheta
 
         y[0:n_agents] = xNew
