@@ -94,7 +94,7 @@ class Algorithm {
 
     discrete_step(neighborVStates, neighborEnabled) {
         
-        const disturbance = this.computeDisturbance();
+        const disturbance = this.computeDisturbance() * this.dt;
 
         let gi = 0; 
         ({ gi } = this.g_i(neighborVStates, neighborEnabled));
