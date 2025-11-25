@@ -17,6 +17,10 @@ class Algorithm {
         this.vartheta0 = (Number(params.vartheta) * this.inv_scale_factor);
         this.eta = (Number(params.eta) * this.inv_scale_factor);
 
+        this.alpha = (Number(params.alpha) * this.inv_scale_factor); 
+        this.delta = (Number(params.delta) * this.inv_scale_factor);
+        this.discrete_time = params.discrete_time;
+
         // --- DISTURBANCE PARAMETERS (Matching the Noridic structure) ---
         this.dist_on = params.disturbance.disturbance_on; 
         // Random Component
@@ -42,6 +46,9 @@ class Algorithm {
         this.gi = 0
     }
 
+    /**
+     * Javier's coordination control law: g_i(z_i, v_i)
+     */
     v_i(neighborVStates, neighborEnabled) {
         let vi = 0; 
         for (let j in neighborVStates) {
@@ -52,6 +59,22 @@ class Algorithm {
             }
         }
         return {vi: vi};
+    }
+
+    /**
+     * Consensus average control law: g_i(z_i, v_i)
+     * - Assumes strongly connected and balanced graph to reach average consensus
+     */
+    g_i(neighborVStates, neighborEnabled) {
+        let gi = 0; 
+        for (let j in neighborVStates) {
+            if (neighborEnabled[j]) {
+                // Ensure neighborVStates[j] is scaled if it's coming in as an integer
+                let diff = this.vstate - neighborVStates[j] * this.inv_scale_factor;
+                gi += (-1) * diff;
+            }
+        }
+        return {gi: gi};
     }
 
     computeDisturbance() {
@@ -67,6 +90,39 @@ class Algorithm {
         
         const nu = m + this.dist_beta + sinusoidal;
         return nu;
+    }
+
+    discrete_step(neighborVStates, neighborEnabled) {
+        
+        const disturbance = this.computeDisturbance();
+
+        let gi = 0; 
+        ({ gi } = this.g_i(neighborVStates, neighborEnabled));
+        this.gi = this.alpha * gi;
+
+        this.sigma = this.state - this.vstate;
+        this.grad = Math.sign(this.sigma);
+
+        const u = this.gi - this.vartheta * this.grad;
+        
+        let dvtheta = 0;   
+        if (Math.abs(this.sigma) > this.delta) {
+            dvtheta = 1.0; 
+        } else {
+            dvtheta = 0.0;
+        }
+        
+        this.state = Math.max(this.state + u + disturbance, 0);
+        this.vstate = Math.max(this.vstate + this.gi, 0);
+        this.vartheta = Math.max(this.vartheta + this.eta * dvtheta, 0);
+
+        this.cnt = (this.cnt + 1) % this.samples;
+        
+        return {
+            state: Math.floor(this.state * this.scale_factor),
+            vstate: Math.floor(this.vstate * this.scale_factor),
+            vartheta: Math.floor(this.vartheta * this.scale_factor)
+        };
     }
 
 

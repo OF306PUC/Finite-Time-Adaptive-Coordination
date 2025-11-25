@@ -166,7 +166,7 @@ if (TYPE == TYPE_BLE) {
     /**
      * SLOW LOOP: Network Fetching
      * Fetches neighbor data, updates the shared state variables and sends the lastest complete state
-     * to the backend process every NETWORK_FETCH_INTERVAL [ms:
+     * to the backend process every NETWORK_FETCH_INTERVAL 
      */
     async function networkFetchLoop() {
         if (!params.trigger) {
@@ -211,12 +211,29 @@ if (TYPE == TYPE_BLE) {
         if (params.enabled) {
             // READ from the latest shared variables (instantaneous, no await)
             state.neighborVStates = latestNeighborVStates;
-            // Execute the fast Euler step
-            ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.update(latestNeighborVStates, latestNeighborEnabled));
+            if (!params.discrete_time) {
+                // CONTINUOUS-TIME DYNAMICS
+                // Execute the fast Euler step
+                ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.update(
+                    latestNeighborVStates, 
+                    latestNeighborEnabled
+                ));
+            } else {
+                // DISCRETE-TIME DYNAMICS
+                // Execute the discrete-time update step
+                ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.discrete_step(
+                    latestNeighborVStates, 
+                    latestNeighborEnabled
+                ));
+            }
         }
 
         // 2. Schedule the next iteration using the DT period (params.dt)
-        dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
+        if (!params.discrete_time) {
+            dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
+        } else {
+            dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.clock);
+        }
     }
 
     // Edge-process: on params message received from backend-process
@@ -261,7 +278,11 @@ if (TYPE == TYPE_BLE) {
                 // 1. Start the SLOW network fetch/post loop (100ms)
                 networkLoopTimeoutId = setTimeout(networkFetchLoop, params.clock);
                 // 2. Start the FAST dynamics loop (dt, e.g., 1ms)
-                dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
+                if (!updatedParams.discrete_time) {
+                    dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
+                } else {
+                    dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.clock);
+                }
 
             } else if (!updatedParams.trigger && params.trigger) {
                 if (dynamicsLoopTimeoutId) {
