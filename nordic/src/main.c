@@ -47,12 +47,12 @@ static void dynamics_timer_cb(struct k_timer *dummy); // High-frequency dynamics
  * The fast thread (P=5) handles the 1ms dynamics via a semaphore clock.
  * The slow thread (P=7) handles network I/O and logging.
  */
-K_THREAD_DEFINE(fast_dynamics_thread_id, APP_STACK_SIZE,
-                fast_dynamics_thread, NULL, NULL, NULL,
+K_THREAD_DEFINE(dynamics_thread_id, APP_STACK_SIZE,
+                dynamics_thread, NULL, NULL, NULL,
                 THREAD_FAST_DYNAMICS_PRIORITY, 0, 0);
 
 // Assuming thread_consensus_app should execute the thread_slow_network logic
-K_THREAD_DEFINE(thread_consensus_id, APP_STACK_SIZE, slow_network_thread,
+K_THREAD_DEFINE(thread_consensus_id, APP_STACK_SIZE, network_fetching_thread,
                 NULL, NULL, NULL, THREAD_SLOW_NETWORK_PRIORITY, 0, 0);
 
 /**
@@ -162,7 +162,7 @@ static void network_fetching_thread(void) {
                 if (!consensus.discrete_time) {
                     k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.dt));
                 } else {
-                    k_timer_start(&dynamics_timer, K_SEC(0), K_MSEC(consensus.Ts));
+                    k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.Ts));
                 }
 
                 consensus.first_time_running = false;
