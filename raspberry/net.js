@@ -56,7 +56,7 @@ const NODE_TYPE_PORT = {
 const NUM_NODES = 30; // maximum number of nodes supported
 
 // Seed the random number generator for reproducibility
-const rng = seedrandom('consensus');
+const rng = seedrandom('FTRAC');
 
 // Pre-generated initial states for up to 30 nodes (clusters scenario: {BLE, WiFi, Bridge} x 10 nodes):
 const INITIAL_STATES_BLE = Array.from({length: Math.floor(NUM_NODES/3)}, () => encodeFloat(rng() * 10));
