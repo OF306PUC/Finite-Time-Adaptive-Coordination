@@ -66,6 +66,11 @@ const INITIAL_VSTATES_BLE = Array.from({length: Math.floor(NUM_NODES/3)}, () => 
 const INITIAL_VSTATES_WIFI = Array.from({length: Math.floor(NUM_NODES/3)}, () => encodeFloat(rng() * 10 + 10));
 const INITIAL_VSTATES_BRIDGE = Array.from({length: Math.floor(NUM_NODES/3)}, () => encodeFloat(rng() * 10 + 20));
 
+/**
+ * For discrete time implementation we need eta <<< alpha 
+ * - eta: adaptive gain convergence rate. Is the speed of convergence x --> z
+ * - alpha: consensus gain. Is the speed of cooperative task coordination of virtual state z
+ */
 
 function createNodes(topologyConfig) {
     const nodes = {}; 
@@ -113,10 +118,13 @@ function createNodes(topologyConfig) {
             neighbors: cfg.neighbors,
             clock: cfg.clock,
             dt: 1,                      
-            state: state,
+            state: state,               
             vstate: vstate,
             vartheta: 0,
-            eta: 500000,        
+            eta: 1,                     // scale = 1e6 --> eta = 1 corresponds to 1e-6 in float
+            alpha: 100000,              // scale = 1e6 --> alpha = 100000 corresponds to 0.1 in float
+            delta: 10000,               // scale = 1e6 --> delta = 10000 corresponds to 0.01 in float
+            discrete_time: true,
             disturbance: {                    
                 disturbance_on: true,        
                 amplitude: 1500000,
