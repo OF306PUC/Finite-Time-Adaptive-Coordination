@@ -65,10 +65,9 @@ class JSONtoCSVConverter:
 
 
 if __name__ == "__main__":
-    num_agents = 30
-    sim_name = f"{num_agents}node-dring"
-    output_csv_dir = f"data/{num_agents}node-dring-csv"
-    num_agents = 30
+    num_agents = 9
+    sim_name = "test"#f"{num_agents}node-dring"
+    output_csv_dir = "test-csv"#f"data/{num_agents}node-dring-csv"
     converter = JSONtoCSVConverter(filename_template="../data/{}/{}.json",
                                    simulation=sim_name,
                                    total_nodes=num_agents,

@@ -46,12 +46,13 @@ def plot_simulation(t, x, z, vartheta, params):
         base_color = colors[i % len(colors)]
         ref_color = darken_color(base_color, amount=0.75)  
 
-        axs[0].plot(t, x[i,:], color=base_color, linestyle='-')
-        if n_agents <= 10:
-            axs[0].plot(t, z[i,:], color=ref_color, linestyle='--')
-        else: 
-            if i == 0:
-                axs[0].plot(t, z[i,:], color=ref_color, linestyle='--', label=f'$z_{{{i+1}}}$ (ref.)')
+        if n_agents <= 10: 
+            axs[0].plot(t, x[i,:], color=base_color, linestyle='-', label=f'$x_{{{i+1}}}$')
+        else:
+            axs[0].plot(t, x[i,:], color=base_color, linestyle='-')
+
+        if i == 0:
+            axs[0].plot(t, z[i,:], color=ref_color, linestyle='--', label=f'$z_{{{i+1}}}$ (ref.)')
     
     axs[0].set_title('States $x_i$')
     axs[0].set_xlabel('Time (s)')

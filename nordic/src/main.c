@@ -118,9 +118,9 @@ static void dynamics_thread(void) {
         k_mutex_lock(&consensus_mutex, K_FOREVER);
         if (consensus.running && consensus.enabled) {
             if (!consensus.discrete_time) {
-                discrete_step(&consensus);
-            } else {
                 update_consensus(&consensus);
+            } else {
+                discrete_step(&consensus);
             }
             
             custom_data_type custom_data = {
@@ -187,6 +187,8 @@ static void network_fetching_thread(void) {
         } else {
             k_timer_stop(&dynamics_timer);
             k_sleep(K_MSEC(1000));
+
+            // Stop broadcaster and observer when consensus is not running: 
         }
     }
 }

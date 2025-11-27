@@ -11,7 +11,7 @@ from utils_graph import NODES
 
 #% >>> System parameters: 
 ## Simulation:
-T        = 5.0
+T        = 4.0
 dt       = 0.001
 time     = np.arange(0, T, dt)
 n_points = len(time)
@@ -32,9 +32,9 @@ use_laplacian = True
 ## Adaptive gain: 
 omega                 = 1.0     # Timer oscillator frequency (rad/s) --> slope 1s/1s
 eta                   = 0.5     # adaptation gain
-eta_discrete          = 1e-6    # discrete adaptation gain
-alpha                 = 1e-1    # consensual law gain: W(alpha) = I - alpha*L
-freeze_threshold_off  = 0.010   # error-threshold to freeze gain evolution ("ε" in paper)
+eta_discrete          = 2.5e-6  # discrete adaptation gain
+alpha                 = 5e-2    # consensual law gain: W(alpha) = I - alpha*L
+freeze_threshold_off  = 1e-2    # error-threshold to freeze gain evolution ("ε" in paper)
 freeze_threshold_on   = 0.050   # error-threshold to re-activate gain evolution ("ε̄" in paper)
 active                = np.zeros(n_agents)  # Initially, all agents are inactive
 disturbance_scale     = 1e-3
@@ -58,9 +58,9 @@ params = {
 }
 
 ## Disturbance: bounded known input
-alpha   = 0.0
-beta    = 0.0
-kappa   = 0.0
+alpha   = 1.0
+beta    = 0.1
+kappa   = 0.4
 phi     = np.random.uniform(0, 1, (n_agents, n_points)) 
 nu = np.random.uniform(-alpha, alpha, (n_agents, n_points)) + beta + kappa * np.sin(2*np.pi*10*(time - phi))  
 
@@ -391,8 +391,8 @@ def simulate_discrete_dynamics(params, init_conditions):
                 dvtheta[i] = 0.0
 
         u = g - vartheta[:, k] * grad
-        xNew = x[:, k] + u + nu[:, k] * d_scale + dt*10
-        zNew = z[:, k] + g + dt*10
+        xNew = x[:, k] + u + nu[:, k] * d_scale
+        zNew = z[:, k] + g 
         varthetaNew = vartheta[:, k] + eta * dvtheta
 
         y[0:n_agents] = xNew

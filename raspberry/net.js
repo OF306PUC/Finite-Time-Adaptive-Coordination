@@ -153,7 +153,6 @@ function createNodes(topologyConfig) {
     const csvHeader = 'id,type,state,vstate\n';
     const csvRows = initialConditions.map(ic => `${ic.id},${ic.type},${ic.state},${ic.vstate}`).join('\n');
     fs.writeFileSync(csvPath, csvHeader + csvRows);
-    console.log(`Initial conditions saved to ${csvPath}`);
 
     return nodes;
 }
