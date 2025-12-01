@@ -1,6 +1,6 @@
-# 🧠 Consensus Platform
+# 🧠 Practical Coordination Scheme Platform
 
-This repository implements a **consensus algorithm** across a heterogeneous IoT network composed of **Raspberry Pi 4** devices and **Nordic nRF52-DK** boards.  
+This repository implements a **coordination algorithms** across a heterogeneous IoT network composed of **Raspberry Pi 4** devices and **Nordic nRF52-DK** boards.  
 Communication between agents occurs through **Wi-Fi** and **Bluetooth Low Energy (BLE)** links.
 
 ---
@@ -123,18 +123,12 @@ For each node:
 
 ### 7. Configure the network topology
 
-Edit `~/Desktop/consensus/raspberry/net.js` and modify the `NODES` variable to match your desired topology.
+Edit `~/Desktop/consensus/raspberry/net.js` and modify the `TOPOLOGY` variable to match your desired topology.
 
-Example (9-node cluster):
+Example (9-node dring):
 ```js
 // Example topology
-//       3 --- 9
-//        \   /
-//          6
-//        /   \
-// 7 --- 1     8 --- 2
-//  \   /       \   /
-//    4           5
+// ... ---> 4 ---> 1 ---> 9 ---> 5 ---> 2 ---> 6 ---> 8 ---> 3 ---> 7 ---> ...
 ```
 
 ---

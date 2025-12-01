@@ -62,7 +62,7 @@ alpha   = 1.0
 beta    = 0.1
 kappa   = 0.4
 phi     = np.random.uniform(0, 1, (n_agents, n_points)) 
-nu = np.random.uniform(-alpha, alpha, (n_agents, n_points)) + beta + kappa * np.sin(2*np.pi*10*(time - phi))  
+nu = np.random.uniform(-alpha, alpha, (n_agents, n_points)) + beta + kappa * np.sin(2*np.pi*1.0*(time - phi))  
 
 ## Initial conditions:
 init_conditions = {
@@ -383,7 +383,7 @@ def simulate_discrete_dynamics(params, init_conditions):
         for i in range(n_agents): 
             neighbors = NODES[i+1]['neighbors']
             neighbors_idx = [n-1 for n in neighbors]
-            g[i] = cl.gi(i, z[:, k], neighbors_idx, alpha)
+            g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha)
 
             if np.abs(sigma[i]) > delta:
                 dvtheta[i] = 1.0

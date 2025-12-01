@@ -32,6 +32,7 @@ typedef struct {
  */
 typedef struct {
     bool discrete_time;                // whether the consensus algorithm is in discrete time or continuous time (Euler integration) **(NEW)
+    bool consensual_avg_law;           // whether to use the consensual average law or Javier's law **(NEW)
     bool running;                      // whether the consensus algorithm is running or not
     bool enabled;                      // whether the consensus algorithm is enabled or not
     bool first_time_running;           // to initialize: first broadcasting, observing, timer start

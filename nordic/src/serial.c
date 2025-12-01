@@ -146,24 +146,25 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                             while (pt != NULL) {
                                 int32_t value = atoi(pt); 
                                 switch (cnt) {
-                                    case 0:  consensus.Ts            = value;        break;
-                                    case 1:  consensus.dt            = value;        break; 
-                                    case 2:  consensus.state0        = value;        break; 
-                                    case 3:  consensus.vstate0       = value;        break; 
-                                    case 4:  consensus.vartheta0     = value;        break; 
-                                    case 5:  consensus.eta           = value;        break; 
-                                    case 6:  consensus.alpha         = value;        break;
-                                    case 7:  consensus.delta         = value;        break;
-                                    case 8:  consensus.discrete_time = (value == 1); break;
+                                    case 0:  consensus.Ts                 = value;        break;
+                                    case 1:  consensus.dt                 = value;        break; 
+                                    case 2:  consensus.state0             = value;        break; 
+                                    case 3:  consensus.vstate0            = value;        break; 
+                                    case 4:  consensus.vartheta0          = value;        break; 
+                                    case 5:  consensus.eta                = value;        break; 
+                                    case 6:  consensus.alpha              = value;        break;
+                                    case 7:  consensus.delta              = value;        break;
+                                    case 8:  consensus.discrete_time      = (value == 1); break;
+                                    case 9:  consensus.consensual_avg_law = (value == 1); break;
                                     default: break;
                                 }
                                 cnt++; 
                                 pt = strtok(NULL, ",");
                             }
                             LOG_INF("Algorithm parameters updated over serial.");
-                            LOG_INF("Ts: %d, dt: %d, state0: %d, vstate0: %d, vartheta0: %d, eta: %d, alpha: %d, delta: %d, discrete_time: %d", 
+                            LOG_INF("Ts: %d, dt: %d, state0: %d, vstate0: %d, vartheta0: %d, eta: %d, alpha: %d, delta: %d, discrete_time: %d, consensual_avg_law: %d", 
                                 consensus.Ts, consensus.dt, consensus.state0, consensus.vstate0, consensus.vartheta0, consensus.eta, 
-                                consensus.alpha, consensus.delta, consensus.discrete_time);
+                                consensus.alpha, consensus.delta, consensus.discrete_time, consensus.consensual_avg_law);
                             break;
                         
                         // When receiving disturbance related type: 'p' (8 parameters)

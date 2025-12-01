@@ -3,6 +3,5 @@ raspberry/node_modules/
 raspberry/package-lock.json
 raspberry/python/__pycache__/
 raspberry/python/data/
-raspberry/data/
 __pycache__/
 .venv/

@@ -15,6 +15,7 @@ consensus_params consensus;
 
 void consensus_init(void) {
     consensus.discrete_time          = true;
+    consensus.consensual_avg_law     = true;
     consensus.running                = false;                  
     consensus.enabled                = false;                 
     consensus.first_time_running     = true;                    // always true at the begging of the execution              
@@ -131,7 +132,14 @@ void discrete_step(consensus_params* cp) {
     float sigma = x - z;
     float grad = sign(sigma);
     
-    float gi = alpha * g_i(cp); // if (average consensus law) else v_i(cp) if (Javier's law)
+    float gi = 0.0; 
+    if (cp->consensual_avg_law) {
+        gi = g_i(cp);
+    } else { // Javier's law
+        gi = v_i(cp);
+    }
+    gi = alpha * gi; // if (average consensus law) else v_i(cp) if (Javier's law)
+
     float u = gi - vartheta * grad;
 
     float dvtheta = (fabsf(sigma) > delta) ? 1.0f : 0.0f;

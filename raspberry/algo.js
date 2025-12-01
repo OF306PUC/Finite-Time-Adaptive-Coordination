@@ -20,6 +20,7 @@ class Algorithm {
         this.alpha = (Number(params.alpha) * this.inv_scale_factor); 
         this.delta = (Number(params.delta) * this.inv_scale_factor);
         this.discrete_time = params.discrete_time;
+        this.consensual_avg_law = params.consensual_avg_law;
 
         // --- DISTURBANCE PARAMETERS (Matching the Noridic structure) ---
         this.dist_on = params.disturbance.disturbance_on; 
@@ -97,7 +98,11 @@ class Algorithm {
         const disturbance = this.computeDisturbance() * this.dt;
 
         let gi = 0; 
-        ({ gi } = this.g_i(neighborVStates, neighborEnabled));
+        if (this.consensual_avg_law) {
+            ({ gi } = this.g_i(neighborVStates, neighborEnabled));
+        } else {
+            ({ gi } = this.v_i(neighborVStates, neighborEnabled));
+        }
         this.gi = this.alpha * gi;
 
         this.sigma = this.state - this.vstate;

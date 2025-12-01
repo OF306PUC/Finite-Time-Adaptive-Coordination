@@ -206,8 +206,8 @@ class PlotConsensus:
 
 
 if __name__ == "__main__":
-    sim_name = "30node-clusters"
-    num_agents = 30
+    sim_name = "test"
+    num_agents = 9
     plotter = PlotConsensus(
         filename_template="../data/{}/{}.json",
         simulation=sim_name, 
