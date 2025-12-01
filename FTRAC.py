@@ -32,7 +32,7 @@ use_laplacian = True
 ## Adaptive gain: 
 omega                 = 1.0     # Timer oscillator frequency (rad/s) --> slope 1s/1s
 eta                   = 0.5     # adaptation gain
-eta_discrete          = 2.5e-6  # discrete adaptation gain
+eta_discrete          = 2.0e-6  # discrete adaptation gain
 alpha                 = 5e-2    # consensual law gain: W(alpha) = I - alpha*L
 freeze_threshold_off  = 1e-2    # error-threshold to freeze gain evolution ("ε" in paper)
 freeze_threshold_on   = 0.050   # error-threshold to re-activate gain evolution ("ε̄" in paper)
@@ -383,7 +383,7 @@ def simulate_discrete_dynamics(params, init_conditions):
         for i in range(n_agents): 
             neighbors = NODES[i+1]['neighbors']
             neighbors_idx = [n-1 for n in neighbors]
-            g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha)
+            g[i] = cl.gi(i, z[:, k], neighbors_idx, alpha)
 
             if np.abs(sigma[i]) > delta:
                 dvtheta[i] = 1.0
