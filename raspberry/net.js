@@ -125,7 +125,7 @@ function createNodes(topologyConfig) {
             alpha: 50000,               // scale = 1e6 --> alpha = 50000 corresponds to 0.05 in float
             delta: 10000,               // scale = 1e6 --> delta = 10000 corresponds to 0.01 in float
             discrete_time: true,        // **(NEW)
-            consensual_avg_law: false,  // **(NEW)
+            consensual_avg_law: true,  // **(NEW)
             disturbance: {                    
                 disturbance_on: true,        
                 amplitude: 1000000,          // scale = 1e6 --> amplitude = 1000000 corresponds to 1.0 in float

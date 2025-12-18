@@ -161,32 +161,26 @@ Then go to **Data History → [your test name]** to view and analyze your result
 Using the following topology:
 
 ```js
-// 9-node cluster
-//       3 --- 9
-//        \   /
-//          6
-//        /   \
-// 7 --- 1     8 --- 2
-//  \   /       \   /
-//    4           5
-```
+// 9node-ring-dir: ... ---> 4 ---> 1 ---> 9 ---> 5 ---> 2 ---> 6 ---> 8 ---> 3 ---> 7 ---> ...
 
-```js
 TOPOLOGY = [
-  {id: 1, ip: '192.168.0.136', type: TYPE_BLE,    enabled: true,  neighbors: [4,6,7],   clock: 200},
-  {id: 2, ip: '192.168.0.136', type: TYPE_WIFI,   enabled: true,  neighbors: [5,8],     clock: 200},
-  {id: 3, ip: '192.168.0.136', type: TYPE_BRIDGE, enabled: true,  neighbors: [6,9],     clock: 200},
-  {id: 4, ip: '192.168.0.101', type: TYPE_BLE,    enabled: true,  neighbors: [1,7],     clock: 200},
-  {id: 5, ip: '192.168.0.101', type: TYPE_WIFI,   enabled: true,  neighbors: [2,8],     clock: 200},
-  {id: 6, ip: '192.168.0.101', type: TYPE_BRIDGE, enabled: false, neighbors: [1,3,8,9], clock: 200},
-  {id: 7, ip: '192.168.0.134', type: TYPE_BLE,    enabled: true,  neighbors: [1,4],     clock: 200},
-  {id: 8, ip: '192.168.0.134', type: TYPE_WIFI,   enabled: true,  neighbors: [2,5,6],   clock: 200},
-  {id: 9, ip: '192.168.0.134', type: TYPE_BRIDGE, enabled: true,  neighbors: [3,6],     clock: 200},
-];
+  {id: 1, ip: '192.168.0.136', type: TYPE_BLE,    enabled: true, neighbors: [4], clock: 500},
+  {id: 2, ip: '192.168.0.136', type: TYPE_WIFI,   enabled: true, neighbors: [5], clock: 500},
+  {id: 3, ip: '192.168.0.136', type: TYPE_BRIDGE, enabled: true, neighbors: [8], clock: 500},
+  {id: 4, ip: '192.168.0.101', type: TYPE_BLE,    enabled: true, neighbors: [7], clock: 500},
+  {id: 5, ip: '192.168.0.101', type: TYPE_WIFI,   enabled: true, neighbors: [9], clock: 500},
+  {id: 6, ip: '192.168.0.101', type: TYPE_BRIDGE, enabled: true, neighbors: [2], clock: 500},
+  {id: 7, ip: '192.168.0.134', type: TYPE_BLE,    enabled: true, neighbors: [3], clock: 500},
+  {id: 8, ip: '192.168.0.134', type: TYPE_WIFI,   enabled: true, neighbors: [6], clock: 500},
+  {id: 9, ip: '192.168.0.134', type: TYPE_BRIDGE, enabled: true, neighbors: [1], clock: 500},
+]; 
 ```
 
-Initially, node 6 is disconnected from the network.  
-At second 30 (or 60), node 6 reconnects, demonstrating the algorithm’s robustness to dynamic topology changes.
+<p align="center">
+  <img src="docs/plots/test_x.svg" width="32%">
+  <img src="docs/plots/test_z.svg" width="32%">
+  <img src="docs/plots/test_vartheta.svg" width="32%">
+</p>
 
 ---
 
