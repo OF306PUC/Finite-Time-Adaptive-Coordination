@@ -121,7 +121,7 @@ function createNodes(topologyConfig) {
             state: state,               
             vstate: vstate,
             vartheta: 0,
-            eta: 2,                     // scale = 1e6 --> eta = 1 corresponds to 2e-6 in float
+            eta: 2,                     // scale = 1e6 --> eta = 2 corresponds to 2e-6 in float
             alpha: 50000,               // scale = 1e6 --> alpha = 50000 corresponds to 0.05 in float
             delta: 10000,               // scale = 1e6 --> delta = 10000 corresponds to 0.01 in float
             discrete_time: true,        // **(NEW)
