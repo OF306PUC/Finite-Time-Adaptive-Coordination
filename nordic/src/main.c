@@ -5,7 +5,7 @@
 #include <zephyr/bluetooth/gap.h>
 #include <string.h> 
 
-#include "consensus.h"
+#include "coordination_task.h"
 #include "common.h"
 #include "observer.h"
 #include "broadcaster.h"
@@ -27,7 +27,7 @@ LOG_MODULE_REGISTER(Module_Main, LOG_LEVEL_INF);
 
 // --- TIMER, SEMAPHORE AND MUTEX structs ---
 static struct k_timer dynamics_timer;
-static struct k_mutex consensus_mutex;
+static struct k_mutex coordination_mutex;
 static struct k_sem dynamics_sem; // Semaphore for 1ms clocking
 
 /**
@@ -36,7 +36,7 @@ static struct k_sem dynamics_sem; // Semaphore for 1ms clocking
 static void leds_init(void);                          // Auxiliary function for starting LEDs
 static void bt_init(void);                            // Auxiliary function for starting Bluetooth
 static void dynamics_thread(void);                    // Dedicated thread for 1ms dynamics (if not discrete time)
-static void network_fetching_thread(void);            // Slow network/logging thread (body of original thread_consensus)
+static void network_fetching_thread(void);            // Slow network/logging thread (body of original thread_coordination_app)
 static void dynamics_timer_cb(struct k_timer *dummy); // High-frequency dynamics timer callback
 /*
  * -------------------------------------------------------------------------------------
@@ -51,8 +51,8 @@ K_THREAD_DEFINE(dynamics_thread_id, APP_STACK_SIZE,
                 dynamics_thread, NULL, NULL, NULL,
                 THREAD_FAST_DYNAMICS_PRIORITY, 0, 0);
 
-// Assuming thread_consensus_app should execute the thread_slow_network logic
-K_THREAD_DEFINE(thread_consensus_id, APP_STACK_SIZE, network_fetching_thread,
+// Assuming thread_coordination_app should execute the thread_slow_network logic
+K_THREAD_DEFINE(thread_coordination_id, APP_STACK_SIZE, network_fetching_thread,
                 NULL, NULL, NULL, THREAD_SLOW_NETWORK_PRIORITY, 0, 0);
 
 /**
@@ -61,13 +61,13 @@ K_THREAD_DEFINE(thread_consensus_id, APP_STACK_SIZE, network_fetching_thread,
 int main(void) {
     int blink_status = 0;
 
-    consensus_init(); // Initialize consensus parameters
+    coordination_params_init(); // Initialize coordination parameters
     leds_init();
     bt_init();
     serial_init();
 
     // Original k_work_init and k_timer_init are replaced/modified:
-    k_mutex_init(&consensus_mutex);
+    k_mutex_init(&coordination_mutex);
     k_sem_init(&dynamics_sem, 0, 1);
     k_timer_init(&dynamics_timer, dynamics_timer_cb, NULL);
 
@@ -100,7 +100,7 @@ static void bt_init(void) {
 
 /**
  * --- FAST SIMULATION LOOP (Timer Handler) ---
- * Runs every 'consensus.dt' (e.g., 1ms) in an ISR context.
+ * Runs every 'coordination.dt' (e.g., 1ms) in an ISR context.
  */
 static void dynamics_timer_cb(struct k_timer *dummy) {
     ARG_UNUSED(dummy);
@@ -115,23 +115,19 @@ static void dynamics_thread(void) {
     while (1) {
         k_sem_take(&dynamics_sem, K_FOREVER);
 
-        k_mutex_lock(&consensus_mutex, K_FOREVER);
-        if (consensus.running && consensus.enabled) {
-            if (!consensus.discrete_time) {
-                update_consensus(&consensus);
-            } else {
-                discrete_step(&consensus);
-            }
+        k_mutex_lock(&coordination_mutex, K_FOREVER);
+        if (coordination.running && coordination.enabled) {
+            discrete_step(&coordination);
             
             custom_data_type custom_data = {
                 MANUFACTURER_ID,
-                consensus.enabled ? NETID_ENABLED : NETID_DISABLED,
-                consensus.node,
-                consensus.vstate
+                coordination.enabled ? NETID_ENABLED : NETID_DISABLED,
+                coordination.node,
+                coordination.vstate
             };
             broadcaster_update_scan_response_custom_data(&custom_data);
         }
-        k_mutex_unlock(&consensus_mutex);
+        k_mutex_unlock(&coordination_mutex);
     }
 }
 
@@ -143,52 +139,47 @@ static void network_fetching_thread(void) {
     /**
      * This should be done using a timer too
      */
-    static consensus_params log_data_copy;
+    static coordination_params log_data_copy;
     static neighbor_info_type neighbor_info;
 
     while (1) {
-        if (consensus.running) {
-            if (consensus.first_time_running) {
+        if (coordination.running) {
+            if (coordination.first_time_running) {
                 custom_data_type initial_data = {
                     MANUFACTURER_ID,
-                    consensus.enabled ? NETID_ENABLED : NETID_DISABLED,
-                    consensus.node,
-                    consensus.vstate
+                    coordination.enabled ? NETID_ENABLED : NETID_DISABLED,
+                    coordination.node,
+                    coordination.vstate
                 };
                 broadcaster_init(&initial_data);
                 observer_init();
                 
-                // Start dynamics timer based on discrete_time flag
-                if (!consensus.discrete_time) {
-                    k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.dt));
-                } else {
-                    k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(consensus.Ts));
-                }
-
-                consensus.first_time_running = false;
+                // Start dynamics timer 
+                k_timer_start(&dynamics_timer, K_MSEC(0), K_MSEC(coordination.dt));
+                coordination.first_time_running = false;
             }
 
             // --- SLOW BLOCKING NETWORK I/O (Receiving neighbor data) ---
-            if (consensus.all_neighbors_observed) {
+            if (coordination.all_neighbors_observed) {
                 // Blocks until a new network message is available
                 if (!k_msgq_get(&custom_observer_msg_queue, &neighbor_info, K_FOREVER)) {
 
-                    k_mutex_lock(&consensus_mutex, K_FOREVER);
-                    if (consensus.enabled) {
-                        memcpy(consensus.neighbor_vstates, neighbor_info.vstates, sizeof(neighbor_info.vstates));
-                        memcpy(consensus.neighbor_enabled, neighbor_info.enabled, sizeof(neighbor_info.enabled));
+                    k_mutex_lock(&coordination_mutex, K_FOREVER);
+                    if (coordination.enabled) {
+                        memcpy(coordination.neighbor_vstates, neighbor_info.vstates, sizeof(neighbor_info.vstates));
+                        memcpy(coordination.neighbor_enabled, neighbor_info.enabled, sizeof(neighbor_info.enabled));
                     }
-                    memcpy(&log_data_copy, &consensus, sizeof(consensus_params));
-                    k_mutex_unlock(&consensus_mutex);
-                    serial_log_consensus(&log_data_copy);
+                    memcpy(&log_data_copy, &coordination, sizeof(coordination_params));
+                    k_mutex_unlock(&coordination_mutex);
+                    serial_log_coordination_task(&log_data_copy);
                 }
             }
-            k_sleep(K_MSEC(consensus.Ts));
+            k_sleep(K_MSEC(coordination.Ts));
         } else {
             k_timer_stop(&dynamics_timer);
             k_sleep(K_MSEC(1000));
 
-            // Stop broadcaster and observer when consensus is not running: 
+            // Stop broadcaster and observer when coordination task is not running: 
         }
     }
 }

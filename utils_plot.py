@@ -223,3 +223,23 @@ def plot_hysteresis_and_sign_function(x, z, dvtheta, params, agent=1):
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_sign_power_law(): 
+    x = np.linspace(-2,2,1000)
+    alpha_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+    plt.figure(figsize=(8,6))
+    for alpha in alpha_values:
+        y = np.sign(x) * (np.abs(x) ** alpha)
+        plt.plot(x, y, label=f'α = {alpha:.1f}')
+    plt.axhline(0, color='k', linestyle='--', linewidth=1)
+    plt.axvline(0, color='k', linestyle='--', linewidth=1)
+    plt.title('Sign Power-Law Function for Different α Values')
+    plt.xlabel('x')
+    plt.ylabel(r'$\mathrm{sign}(x) \cdot |x|^{\alpha}$')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+

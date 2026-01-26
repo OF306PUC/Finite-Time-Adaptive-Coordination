@@ -1,5 +1,5 @@
-#ifndef CONSENSUS_H
-#define CONSENSUS_H
+#ifndef COORDINATION_TASK_H
+#define COORDINATION_TASK_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -27,14 +27,12 @@ typedef struct {
 } disturbance_params;
 
 /**
- * Custom type to store consensus parameters sent by user through UART 
- * - TODO: change the name since it is not only consensus anymore, could be any coordination task
+ * Custom type to store coordination parameters sent by user through UART 
  */
 typedef struct {
-    bool discrete_time;                // whether the consensus algorithm is in discrete time or continuous time (Euler integration) **(NEW)
-    bool consensual_avg_law;           // whether to use the consensual average law or Javier's law **(NEW)
-    bool running;                      // whether the consensus algorithm is running or not
-    bool enabled;                      // whether the consensus algorithm is enabled or not
+    bool consensual_avg_law;           // whether to use the consensual asymptotic average law or Javier's law 
+    bool running;                      // whether the coordination algorithm is running or not
+    bool enabled;                      // whether the coordination algorithm is enabled or not
     bool first_time_running;           // to initialize: first broadcasting, observing, timer start
     bool all_neighbors_observed;       // to check if all neighbors have been observed at least once
     bool* available_neighbors;         // array to track which neighbors have been observed
@@ -61,25 +59,20 @@ typedef struct {
     bool* neighbor_enabled;            // array to track which neighbors are enabled
     int32_t* neighbor_vstates;         // array to store neighbor vstates
     disturbance_params disturbance;    // disturbance parameters
-} consensus_params;
+} coordination_params;
 
 /**
- * Global consensus parameters instance
+ * Global coordination parameters instance
  */
-extern consensus_params consensus;
+extern coordination_params coordination;
 
-/**
- * TODO: change the name since it is not only consensus anymore, could be any coordination task
- */
-void consensus_init(void); 
-
+void coordination_params_init(void); 
 float sign(float x);
 float max_of_two_non_negative_f(float a, float b);
-float disturbance(consensus_params* cp);
-float v_i(consensus_params* cp);
-float g_i(consensus_params* cp); 
-void discrete_step(consensus_params* cp);
-void update_consensus(consensus_params* cp);
+float disturbance(coordination_params* cp);
+float v_i(coordination_params* cp);
+float g_i(coordination_params* cp); 
+void discrete_step(coordination_params* cp);
+void update_coordination(coordination_params* cp);
 
-
-#endif // CONSENSUS_H
+#endif // COORDINATION_TASK_H

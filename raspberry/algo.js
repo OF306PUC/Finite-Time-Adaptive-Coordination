@@ -19,7 +19,6 @@ class Algorithm {
 
         this.alpha = Number(params.alpha) * this.inv_scale_factor;
         this.delta = Number(params.delta) * this.inv_scale_factor;
-        this.discrete_time = params.discrete_time;
         this.consensual_avg_law = params.consensual_avg_law;
 
         // --- DISTURBANCE PARAMETERS (Matching the Nordic structure) ---
@@ -158,9 +157,9 @@ class Algorithm {
             dvtheta = 0.0;
         }
 
-        this.state   = Math.max(this.state   + u + disturbance, 0);
-        this.vstate  = Math.max(this.vstate  + this.gi,          0);
-        this.vartheta= Math.max(this.vartheta+ this.eta * dvtheta, 0);
+        this.state    = this.state   + u + disturbance;
+        this.vstate   = this.vstate  + this.gi;
+        this.vartheta = this.vartheta+ this.eta * dvtheta;
 
         this.cnt = (this.cnt + 1) % this.samples;
 
@@ -172,9 +171,9 @@ class Algorithm {
         const out_th = Math.round(this.vartheta* this.scale_factor);
 
         return {
-            state:   out_x,
-            vstate:  out_z,
-            vartheta:out_th
+            state:    out_x,
+            vstate:   out_z,
+            vartheta: out_th
         };
     }
 
@@ -185,9 +184,13 @@ class Algorithm {
 
         const disturbance = this.computeDisturbance();
 
-        let viVal = 0;
-        ({ vi: viVal } = this.v_i(neighborVStates, neighborEnabled));
-        this.gi = viVal;
+        let giVal = 0;
+        if (this.consensual_avg_law) {
+            ({ gi: giVal } = this.g_i(neighborVStates, neighborEnabled));
+        } else {
+            ({ vi: giVal } = this.v_i(neighborVStates, neighborEnabled));
+        }
+        this.gi = this.alpha * giVal;
 
         this.sigma = this.state - this.vstate;
         this.grad = Math.sign(this.sigma);

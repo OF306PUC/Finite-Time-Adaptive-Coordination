@@ -22,12 +22,12 @@ def gi(node_idx, virtual_states, neighbors_index, alpha=1e-1):
 Javier's coordination law:
 - alpha parameter controls convergence speed
 """
-def vi(node_idx, virtual_states, neighbors_index, alpha=1e-1): 
+def vi(node_idx, virtual_states, neighbors_index, alpha=1e-1, link_gain=1e-1, extra_param=0.01): 
     N = len(neighbors_index)
     if N == 0:
         return 0.0
     diffs = np.array(virtual_states[node_idx] - virtual_states[neighbors_index])
-    return (-alpha) * np.sum(np.sign(diffs) * np.sqrt(np.abs(diffs))) 
+    return (-link_gain) * np.sum(np.sign(extra_param * diffs) * (np.abs(extra_param * diffs))**alpha) 
 
 
 if __name__ == "__main__":

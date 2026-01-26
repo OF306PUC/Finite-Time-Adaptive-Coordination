@@ -1,6 +1,4 @@
-// Include modules
 #include "broadcaster.h"
-#include <zephyr/logging/log.h>
 
 // Register the logger for this module
 LOG_MODULE_REGISTER(Module_Broadcaster, LOG_LEVEL_INF);

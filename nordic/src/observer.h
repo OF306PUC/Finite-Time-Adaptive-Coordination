@@ -4,8 +4,10 @@
 // Include modules
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
-#include "consensus.h"
+#include <zephyr/logging/log.h>
 #include "common.h"
+#include "coordination_task.h"
+#include "serial.h"
 
 // Define a type for the message queue
 typedef struct {

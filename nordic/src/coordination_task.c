@@ -1,5 +1,5 @@
 #include <math.h>
-#include "consensus.h"
+#include "coordination_task.h"
 
 #include <zephyr/logging/log.h>
 // Register the logger for this module
@@ -11,43 +11,45 @@ static bool neighbor_enabled[N_MAX_NEIGHBORS] = {false};
 static uint8_t neighbors[N_MAX_NEIGHBORS] = {0};
 static int32_t neighbor_vstates[N_MAX_NEIGHBORS] = {0};
 
-consensus_params consensus; 
+/**
+ *  Global cooridination parameters instance
+ */
+coordination_params coordination; 
 
-void consensus_init(void) {
-    consensus.discrete_time          = true;
-    consensus.consensual_avg_law     = true;
-    consensus.running                = false;                  
-    consensus.enabled                = false;                 
-    consensus.first_time_running     = true;                    // always true at the begging of the execution              
-    consensus.all_neighbors_observed = false;                 
-    consensus.available_neighbors    = available_neighbors;    
-    consensus.node                   = 0;                     
-    consensus.neighbors              = neighbors;              
-    consensus.scale_factor           = 1e6f;                    // must be the same as in raspberry/algo.js      
-    consensus.inv_scale_factor       = 1e-6f;                   // must be the same as in raspberry/algo.js      
-    consensus.N                      = 0;                  
-    consensus.time0                  = 0;                
-    consensus.Ts                     = 0;                   
-    consensus.dt                     = 0;                   
-    consensus.state0                 = 0;               
-    consensus.vstate0                = 0;              
-    consensus.vartheta0              = 0;            
-    consensus.alpha                  = 0;                
-    consensus.eta                    = 0;                  
-    consensus.delta                  = 0;                
-    consensus.state                  = 0;                
-    consensus.vstate                 = 0;               
-    consensus.vartheta               = 0;             
-    consensus.active                 = 0;               
-    consensus.epsilonON              = 0.01f;                   // must be the same as in raspberry/algo.js         
-    consensus.epsilonOFF             = 0.05f;                   // must be the same as in raspberry/algo.js
-    consensus.neighbor_enabled       = neighbor_enabled;       
-    consensus.neighbor_vstates       = neighbor_vstates;      
-    consensus.disturbance            = (disturbance_params){false, 0, 0, 0, 0, 0, 0, 0, 0};  
+void coordination_params_init(void) {
+    coordination.consensual_avg_law     = false;
+    coordination.running                = false;                  
+    coordination.enabled                = false;                 
+    coordination.first_time_running     = true;                    // always true at the begging of the execution              
+    coordination.all_neighbors_observed = false;                 
+    coordination.available_neighbors    = available_neighbors;    
+    coordination.node                   = 0;                     
+    coordination.neighbors              = neighbors;              
+    coordination.scale_factor           = 1e6f;                    // must be the same as in raspberry/algo.js      
+    coordination.inv_scale_factor       = 1e-6f;                   // must be the same as in raspberry/algo.js      
+    coordination.N                      = 0;                  
+    coordination.time0                  = 0;                
+    coordination.Ts                     = 0;                   
+    coordination.dt                     = 0;                   
+    coordination.state0                 = 0;               
+    coordination.vstate0                = 0;              
+    coordination.vartheta0              = 0;            
+    coordination.alpha                  = 0;                
+    coordination.eta                    = 0;                  
+    coordination.delta                  = 0;                
+    coordination.state                  = 0;                
+    coordination.vstate                 = 0;               
+    coordination.vartheta               = 0;             
+    coordination.active                 = 0;               
+    coordination.epsilonON              = 0.01f;                   // must be the same as in raspberry/algo.js         
+    coordination.epsilonOFF             = 0.05f;                   // must be the same as in raspberry/algo.js
+    coordination.neighbor_enabled       = neighbor_enabled;       
+    coordination.neighbor_vstates       = neighbor_vstates;      
+    coordination.disturbance            = (disturbance_params){false, 0, 0, 0, 0, 0, 0, 0, 0};  
 }
 
 
-float disturbance(consensus_params* cp) {
+float disturbance(coordination_params* cp) {
     float nu = 0.0f;
     if (!cp->disturbance.disturbance_on) {
         nu = 0.0f; 
@@ -85,7 +87,7 @@ float max_of_two_non_negative_f(float a, float b) {
 /**
  * Javier's coordination control law: g_i(z_i, v_i)
  */
-float v_i(consensus_params* cp) {
+float v_i(coordination_params* cp) {
     float vstate_f = (float)(cp->vstate * cp->inv_scale_factor);
     float vi = 0.0f;
     for (int j = 0; j < cp->N; j++) {
@@ -101,7 +103,7 @@ float v_i(consensus_params* cp) {
  * Consensus average control law: g_i(z_i, v_i)
  * - Assumes strongly connected and balanced graph to reach average consensus
  */
-float g_i(consensus_params* cp){
+float g_i(coordination_params* cp){
     float z_f = (float)(cp->vstate * cp->inv_scale_factor);
     float vi = 0.0f; 
     for (int j = 0; j < cp->N; j++) {
@@ -113,7 +115,7 @@ float g_i(consensus_params* cp){
     return vi;
 }
 
-void discrete_step(consensus_params* cp) {
+void discrete_step(coordination_params* cp) {
     /**
      * Intended to be run at the same frequency as the fetching of neighbor states
      * No time scaling is applied here. 
@@ -144,26 +146,34 @@ void discrete_step(consensus_params* cp) {
 
     float dvtheta = (fabsf(sigma) > delta) ? 1.0f : 0.0f;
 
-    cp->state = (int32_t)(max_of_two_non_negative_f(x + u + nu, 0.0f) * cp->scale_factor);
-    cp->vstate = (int32_t)(max_of_two_non_negative_f(z + gi, 0.0f) * cp->scale_factor);
+    cp->state = (int32_t)((x + u + nu) * cp->scale_factor);
+    cp->vstate = (int32_t)((z + gi) * cp->scale_factor);
     // Fixed-point rounding for (uint32_t)((vartheta + eta * dvtheta) * cp->scale_factor);
     uint32_t eta_dvtheta = (uint32_t)(eta * dvtheta * cp->scale_factor);
     cp->vartheta += eta_dvtheta;
     cp->disturbance.counter = (cp->disturbance.counter + 1) % cp->disturbance.samples;
 }
 
-void update_consensus(consensus_params* cp) {
+void update_coordination(coordination_params* cp) {
     float dt = (float)(cp->dt) * 1e-3f; // Convert ms to seconds
     float x = (float)(cp->state * cp->inv_scale_factor);
     float z = (float)(cp->vstate * cp->inv_scale_factor);
     float vartheta = (float)(cp->vartheta * cp->inv_scale_factor);
     float eta = (float)(cp->eta * cp->inv_scale_factor);
+    float alpha = (float)(cp->alpha * cp->inv_scale_factor);
 
     float nu = disturbance(cp);
     float sigma = x - z; 
     float grad = sign(sigma); 
-    float vi = v_i(cp);
-    float gi = vi; 
+
+    float gi = 0.0; 
+    if (cp->consensual_avg_law) {
+        gi = g_i(cp);
+    } else { // Javier's law
+        gi = v_i(cp);
+    }
+
+    gi = alpha * gi; // if (average consensus law) else v_i(cp) if (Javier's law)
     float ui = gi - vartheta * grad; 
 
     float dvtheta = 0.0f; 
@@ -182,8 +192,8 @@ void update_consensus(consensus_params* cp) {
             dvtheta = eta * 1.0f; 
         }
     }
-    cp->state = (int32_t)(max_of_two_non_negative_f(x + dt * (ui + nu), 0.0f) * cp->scale_factor);
-    cp->vstate = (int32_t)(max_of_two_non_negative_f(z + dt * gi, 0.0f) * cp->scale_factor);
-    cp->vartheta = (int32_t)(max_of_two_non_negative_f(vartheta + dt * dvtheta, 0.0f) * cp->scale_factor);
+    cp->state = (int32_t)((x + dt * (ui + nu)) * cp->scale_factor);
+    cp->vstate = (int32_t)((z + dt * gi) * cp->scale_factor);
+    cp->vartheta = (int32_t)((vartheta + dt * dvtheta) * cp->scale_factor);
     cp->disturbance.counter = (cp->disturbance.counter + 1) % cp->disturbance.samples;
 }

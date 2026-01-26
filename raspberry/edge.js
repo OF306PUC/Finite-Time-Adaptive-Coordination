@@ -46,14 +46,14 @@ if (TYPE == TYPE_BLE) {
 
     process.on('message', async (params) => {
 
-        // 3 types of messages from backend-process: n -> network, a,p -> consensus (used to be 'a' as algorithm), t -> trigger
+        // 3 types of messages from backend-process: n -> network, a,p -> coordination (used to be 'a' as algorithm), t -> trigger
         // (1) Network params: { enabled, node, neighbors } --> 'n'
         const msgNetwork = `n${params.enabled ? 1 : 0},${params.node},${params.neighbors.join(',')}\n\r`;
         // >>> Split in two messages to avoid overflow in nordic uart buffer (defined as 64 bytes) <<<
-        // (2.1) Consensus Algorithm params updated to: { clock, dt, state, vstate, vartheta, eta, alpha, delta, discrete_time } --> 'a'
-        const msgConsensus = `a${params.clock},${params.dt},${params.state},${params.vstate},${params.vartheta},${params.eta},${params.alpha},`+
-        `${params.delta},${params.discrete_time ? 1 : 0},${params.consensual_avg_law ? 1 : 0}\n\r`; 
-        // (2.2) Consensus Disturbance params update to : { amplitude, offset, beta, A, f, phi, N_samples } --> 'p'
+        // (2.1) Coordination Algorithm params updated to: { clock, dt, state, vstate, vartheta, eta, alpha, delta, consensual_avg_law } --> 'a'
+        const msgCoordination = `a${params.clock},${params.dt},${params.state},${params.vstate},${params.vartheta},${params.eta},${params.alpha},`+
+        `${params.delta},${params.consensual_avg_law ? 1 : 0}\n\r`; 
+        // (2.2) Coordination Disturbance params update to : { amplitude, offset, beta, A, f, phi, N_samples } --> 'p'
         const msgDisturbance = `p${params.disturbance.disturbance_on ? 1 : 0},${params.disturbance.amplitude},${params.disturbance.offset},` +
             `${params.disturbance.beta},${params.disturbance.Amp},${params.disturbance.frequency},${params.disturbance.phase},` +
             `${params.disturbance.samples}\n\r`;
@@ -66,7 +66,7 @@ if (TYPE == TYPE_BLE) {
             await serialDrain(); 
             await serialDelay();
             
-            await serialWrite(msgConsensus);
+            await serialWrite(msgCoordination);
             await serialDrain();
             await serialDelay();
 
@@ -195,7 +195,7 @@ if (TYPE == TYPE_BLE) {
     }
 
     /**
-     * FAST LOOP (Simulation/Euler Integration) - Runs every params.dt (e.g., 1ms).
+     * FAST LOOP - Runs every params.dt (e.g., 1ms).
      * Reads the latest available neighbor data (snapshot) and updates the local state.
      * Executes the consensus algorithm update step.
      */
@@ -211,29 +211,16 @@ if (TYPE == TYPE_BLE) {
         if (params.enabled) {
             // READ from the latest shared variables (instantaneous, no await)
             state.neighborVStates = latestNeighborVStates;
-            if (!params.discrete_time) {
-                // CONTINUOUS-TIME DYNAMICS
-                // Execute the fast Euler step
-                ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.update(
-                    latestNeighborVStates, 
-                    latestNeighborEnabled
-                ));
-            } else {
-                // DISCRETE-TIME DYNAMICS
-                // Execute the discrete-time update step
-                ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.discrete_step(
-                    latestNeighborVStates, 
-                    latestNeighborEnabled
-                ));
-            }
+            // DISCRETE-TIME DYNAMICS
+            // Execute the discrete-time update step
+            ({ state: state.state, vstate: state.vstate, vartheta: state.vartheta } = algo.discrete_step(
+                latestNeighborVStates, 
+                latestNeighborEnabled
+            ));
         }
 
         // 2. Schedule the next iteration using the DT period (params.dt)
-        if (!params.discrete_time) {
-            dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
-        } else {
-            dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.clock);
-        }
+        dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
     }
 
     // Edge-process: on params message received from backend-process
@@ -278,18 +265,14 @@ if (TYPE == TYPE_BLE) {
                 // 1. Start the SLOW network fetch/post loop (100ms)
                 networkLoopTimeoutId = setTimeout(networkFetchLoop, params.clock);
                 // 2. Start the FAST dynamics loop (dt, e.g., 1ms)
-                if (!updatedParams.discrete_time) {
-                    dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
-                } else {
-                    dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.clock);
-                }
+                dynamicsLoopTimeoutId = setTimeout(dynamicsLoop, params.dt);
 
             } else if (!updatedParams.trigger && params.trigger) {
-                if (dynamicsLoopTimeoutId) {
-                    clearTimeout(dynamicsLoopTimeoutId);
-                }
                 if (networkLoopTimeoutId) {
                     clearTimeout(networkLoopTimeoutId);
+                }
+                if (dynamicsLoopTimeoutId) {
+                    clearTimeout(dynamicsLoopTimeoutId);
                 }
                 if (TYPE === TYPE_BRIDGE) {
                     advProcess.kill();

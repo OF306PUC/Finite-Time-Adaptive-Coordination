@@ -1,4 +1,5 @@
 nordic/build*/
+raspberry/data/
 raspberry/node_modules/
 raspberry/package-lock.json
 raspberry/python/__pycache__/

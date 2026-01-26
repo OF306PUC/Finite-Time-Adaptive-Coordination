@@ -4,6 +4,7 @@
 // Include modules
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/gap.h>
+#include <zephyr/logging/log.h>
 #include "common.h"
 
 // Declare public functions

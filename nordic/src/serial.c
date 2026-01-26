@@ -1,11 +1,3 @@
-#include <stdlib.h>
-#include <string.h> 
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/drivers/uart.h>
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include "consensus.h"
 #include "serial.h" 
 
 // Register the logger for this module
@@ -23,25 +15,25 @@ static uint8_t rx_buf[RX_BUFF_SIZE];
 /**
  * Function to send the logged data over serial:
  */
-void serial_log_consensus() {
-    if (!consensus.running) {
+void serial_log_coordination_task(coordination_params* coordination) {
+    if (!coordination->running) {
         return; // Only log when the algorithm is active
     }
     
     // Prepare the string format: "dtime,state,vstate,vartheta,neighbor_vstate1,neighbor_vstate2,...neighbor_vstateN\n\r"
-    int64_t timestamp = k_uptime_get() - consensus.time0; 
+    int64_t timestamp = k_uptime_get() - coordination->time0; 
     int len = snprintf(
         (char *)tx_buf, sizeof(tx_buf), 
         "d%lld,%d,%d,%d", 
         timestamp, 
-        consensus.state, 
-        consensus.vstate, 
-        consensus.vartheta
+        coordination->state, 
+        coordination->vstate, 
+        coordination->vartheta
     );
 
     // Append neighbor states to the buffer making sure we do not exceed de Tx buffer size
-    for (int i = 0; i < consensus.N; i++) {
-        len += snprintf((char *)tx_buf + len, sizeof(tx_buf) - len, ",%d", consensus.neighbor_vstates[i]); 
+    for (int i = 0; i < coordination->N; i++) {
+        len += snprintf((char *)tx_buf + len, sizeof(tx_buf) - len, ",%d", coordination->neighbor_vstates[i]); 
     }
 
     len += snprintf((char *)tx_buf + len, sizeof(tx_buf) - len, "\n\r"); 
@@ -93,48 +85,48 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                                 uint8_t id = atoi(pt); 
 
                                 if (cnt == 0) {
-                                    consensus.enabled = (id == 1); 
+                                    coordination.enabled = (id == 1); 
                                 } else if (cnt == 1) {
-                                    consensus.node = id; 
+                                    coordination.node = id; 
                                 } else {
-                                    consensus.neighbors[cnt-2] = id; 
+                                    coordination.neighbors[cnt-2] = id; 
                                 }
 
                                 cnt++; 
                                 pt = strtok(NULL, ",");
                             }
 
-                            consensus.N = cnt - 2; 
+                            coordination.N = cnt - 2; 
                             LOG_INF("Network parameters updated over serial");
-                            LOG_INF("Node ID: %d, Enabled: %d, Neighbors: ", consensus.node, consensus.enabled);
-                            for (int k = 0; k < consensus.N; k++) {
-                                LOG_INF("%d ", consensus.neighbors[k]);
+                            LOG_INF("Node ID: %d, Enabled: %d, Neighbors: ", coordination.node, coordination.enabled);
+                            for (int k = 0; k < coordination.N; k++) {
+                                LOG_INF("%d ", coordination.neighbors[k]);
                             }
                             break; 
 
-                        // When receiving consensus trigger type: 't'
-                        // Explicitly start/stop the consensus algorithm (reset of initial conditions)
+                        // When receiving coordination trigger type: 't'
+                        // Explicitly start/stop the coordination algorithm (reset of initial conditions)
                         case 't': 
                             if (msg_buffer[1] != '0') {
-                                consensus.running = true; 
-                                consensus.first_time_running = true; 
-                                consensus.all_neighbors_observed = false;
-                                consensus.disturbance.counter = 0;
-                                consensus.time0 = k_uptime_get();
-                                consensus.state = consensus.state0;
-                                consensus.vstate = consensus.vstate0;
-                                consensus.vartheta = consensus.vartheta0;
+                                coordination.running = true; 
+                                coordination.first_time_running = true; 
+                                coordination.all_neighbors_observed = false;
+                                coordination.disturbance.counter = 0;
+                                coordination.time0 = k_uptime_get();
+                                coordination.state = coordination.state0;
+                                coordination.vstate = coordination.vstate0;
+                                coordination.vartheta = coordination.vartheta0;
                                 
                                 for (int k = 0; k < N_MAX_NEIGHBORS; k++) {
-                                    consensus.available_neighbors[k] = false;
-                                    consensus.neighbor_vstates[k] = consensus.vstate0;
-                                    consensus.neighbor_enabled[k] = false;
+                                    coordination.available_neighbors[k] = false;
+                                    coordination.neighbor_vstates[k] = coordination.vstate0;
+                                    coordination.neighbor_enabled[k] = false;
                                 }
-                                LOG_INF("Received 't1' (trigger). Consensus running"); 
+                                LOG_INF("Received 't1' (trigger). Coordination running"); 
                             } else {
-                                consensus.running = false;
-                                consensus.first_time_running = false;
-                                LOG_INF("Received 't0' (stop). Consensus stopped");
+                                coordination.running = false;
+                                coordination.first_time_running = false;
+                                LOG_INF("Received 't0' (stop). Coordination stopped");
                             }
                             break;
 
@@ -146,25 +138,24 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                             while (pt != NULL) {
                                 int32_t value = atoi(pt); 
                                 switch (cnt) {
-                                    case 0:  consensus.Ts                 = value;        break;
-                                    case 1:  consensus.dt                 = value;        break; 
-                                    case 2:  consensus.state0             = value;        break; 
-                                    case 3:  consensus.vstate0            = value;        break; 
-                                    case 4:  consensus.vartheta0          = value;        break; 
-                                    case 5:  consensus.eta                = value;        break; 
-                                    case 6:  consensus.alpha              = value;        break;
-                                    case 7:  consensus.delta              = value;        break;
-                                    case 8:  consensus.discrete_time      = (value == 1); break;
-                                    case 9:  consensus.consensual_avg_law = (value == 1); break;
+                                    case 0:  coordination.Ts                 = value;        break;
+                                    case 1:  coordination.dt                 = value;        break; 
+                                    case 2:  coordination.state0             = value;        break; 
+                                    case 3:  coordination.vstate0            = value;        break; 
+                                    case 4:  coordination.vartheta0          = value;        break; 
+                                    case 5:  coordination.eta                = value;        break; 
+                                    case 6:  coordination.alpha              = value;        break;
+                                    case 7:  coordination.delta              = value;        break;
+                                    case 9:  coordination.consensual_avg_law = (value == 1); break;
                                     default: break;
                                 }
                                 cnt++; 
                                 pt = strtok(NULL, ",");
                             }
                             LOG_INF("Algorithm parameters updated over serial.");
-                            LOG_INF("Ts: %d, dt: %d, state0: %d, vstate0: %d, vartheta0: %d, eta: %d, alpha: %d, delta: %d, discrete_time: %d, consensual_avg_law: %d", 
-                                consensus.Ts, consensus.dt, consensus.state0, consensus.vstate0, consensus.vartheta0, consensus.eta, 
-                                consensus.alpha, consensus.delta, consensus.discrete_time, consensus.consensual_avg_law);
+                            LOG_INF("Ts: %d, dt: %d, state0: %d, vstate0: %d, vartheta0: %d, eta: %d, alpha: %d, delta: %d, consensual_avg_law: %d", 
+                                coordination.Ts, coordination.dt, coordination.state0, coordination.vstate0, coordination.vartheta0, coordination.eta, 
+                                coordination.alpha, coordination.delta, coordination.consensual_avg_law);
                             break;
                         
                         // When receiving disturbance related type: 'p' (8 parameters)
@@ -175,14 +166,14 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                             while (pt != NULL) {
                                 int32_t value = atoi(pt); 
                                 switch (cnt) {
-                                    case 0: consensus.disturbance.disturbance_on = (value == 1); break;
-                                    case 1: consensus.disturbance.amplitude      = value;        break; 
-                                    case 2: consensus.disturbance.offset         = value;        break; 
-                                    case 3: consensus.disturbance.beta           = value;        break;
-                                    case 4: consensus.disturbance.A              = value;        break;
-                                    case 5: consensus.disturbance.frequency      = value;        break;
-                                    case 6: consensus.disturbance.phase          = value;        break;
-                                    case 7: consensus.disturbance.samples        = value;        break; 
+                                    case 0: coordination.disturbance.disturbance_on = (value == 1); break;
+                                    case 1: coordination.disturbance.amplitude      = value;        break; 
+                                    case 2: coordination.disturbance.offset         = value;        break; 
+                                    case 3: coordination.disturbance.beta           = value;        break;
+                                    case 4: coordination.disturbance.A              = value;        break;
+                                    case 5: coordination.disturbance.frequency      = value;        break;
+                                    case 6: coordination.disturbance.phase          = value;        break;
+                                    case 7: coordination.disturbance.samples        = value;        break; 
                                     default: break;
                                 }
                                 cnt++; 
@@ -190,8 +181,8 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
                             }
                             LOG_INF("Disturbance parameters updated over serial.");
                             LOG_INF("Disturbance - on: %d, amplitude: %d, offset: %d, beta: %d, A: %d, frequency: %d, phase: %d, samples: %d", 
-                                consensus.disturbance.disturbance_on, consensus.disturbance.amplitude, consensus.disturbance.offset, consensus.disturbance.beta,    
-                                consensus.disturbance.A, consensus.disturbance.frequency, consensus.disturbance.phase, consensus.disturbance.samples);
+                                coordination.disturbance.disturbance_on, coordination.disturbance.amplitude, coordination.disturbance.offset, coordination.disturbance.beta,    
+                                coordination.disturbance.A, coordination.disturbance.frequency, coordination.disturbance.phase, coordination.disturbance.samples);
                             break;
      
                         default: 

@@ -1,6 +1,4 @@
 #include "observer.h"
-#include "serial.h"
-#include <zephyr/logging/log.h>
 
 // Register the logger for this module
 LOG_MODULE_REGISTER(Module_Observer, LOG_LEVEL_INF);
@@ -13,8 +11,8 @@ K_MSGQ_DEFINE(custom_observer_msg_queue, sizeof(neighbor_info_type), 1, 4);	// d
  * Function to map NEIGHBOR_i_IDs to their respective indices
  */
 static int8_t map_node_to_index(uint8_t node) {
-	for (int i = 0; i < consensus.N; i++) {
-		if (consensus.neighbors[i] == node) {
+	for (int i = 0; i < coordination.N; i++) {
+		if (coordination.neighbors[i] == node) {
 			return i;
 		}
 	}
@@ -38,16 +36,16 @@ static bool on_data_parse_after_device_found(struct bt_data *data, void *user_da
 					int8_t node_index = map_node_to_index(custom_data->node);
 
 					if (node_index >= 0) {
-					    if (!consensus.all_neighbors_observed) {
-					    	consensus.available_neighbors[node_index] = true;
+					    if (!coordination.all_neighbors_observed) {
+					    	coordination.available_neighbors[node_index] = true;
 					    	int N = 0;
-					    	for (int i = 0; i < consensus.N; i++) {
-					    		if (consensus.available_neighbors[i]) {
+					    	for (int i = 0; i < coordination.N; i++) {
+					    		if (coordination.available_neighbors[i]) {
 					    			N++;
 					    		}
 					    	}
-					    	if (N == consensus.N) {
-					    		consensus.all_neighbors_observed = true;
+					    	if (N == coordination.N) {
+					    		coordination.all_neighbors_observed = true;
 					    	}
 					    }
 
