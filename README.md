@@ -74,10 +74,10 @@ The project includes several coordinated components:
 
 ### 3. Deploy the Raspberry Pi code
 
-1. Copy all files from `/consensus/raspberry` to each Raspberry Pi (omit `node_modules` and `package-lock.json`).  
+1. Copy all files from `raspberry/` to each Raspberry Pi (omit `node_modules` and `package-lock.json`).  
 2. Install dependencies:
    ```bash
-   cd ~/Desktop/consensus/raspberry
+   cd ~/Desktop/Finite-Time-Adaptive-Coordination/raspberry
    npm install
    ```
 3. Ensure the script `bleadv.sh` is executable:
@@ -90,7 +90,7 @@ The project includes several coordinated components:
 ### 4. Configure the laptop (hub host)
 
 On your laptop:
-- Clone or copy the repository to `~/Desktop/consensus/raspberry`.
+- Clone or copy the repository to `~/Finite-Time-Adaptive-Coordination/raspberry`.
 - Install Node.js and NVM (no need for `expect`).
 - Ensure you are connected to the same router LAN as the Raspberry Pis.
 
@@ -110,7 +110,7 @@ For each node:
 
 1. Open **three terminal windows** and navigate to:
    ```bash
-   cd ~/Desktop/consensus/raspberry
+   cd ~/Finite-Time-Adaptive-Coordination/raspberry
    ```
 2. Launch the edge-device processes:
    ```bash
@@ -123,7 +123,7 @@ For each node:
 
 ### 7. Configure the network topology
 
-Edit `~/Desktop/consensus/raspberry/net.js` and modify the `TOPOLOGY` variable to match your desired topology.
+Edit `~/Finite-Time-Adaptive-Coordination/raspberry/net.js` and modify the `TOPOLOGY` variable to match your desired topology.
 
 Example (9-node dring):
 ```js
@@ -137,7 +137,7 @@ Example (9-node dring):
 
 1. On your laptop, open a new terminal:
    ```bash
-   cd ~/Desktop/consensus/raspberry
+   cd ~/Finite-Time-Adaptive-Coordination/raspberry
    node hub
    ```
 2. Open a browser at [http://localhost:3000](http://localhost:3000).
@@ -187,10 +187,9 @@ TOPOLOGY = [
 ## 🧩 Folder Structure
 
 ```
-consensus/
+Finite-Time-Adaptive-Coordination/
 ├── nordic/          # nRF52 firmware source (Zephyr-based)
 ├── raspberry/       # Node.js applications for BLE, Wi-Fi, and bridge agents
-├── hub/             # Web server and UI
 └── docs/            # Documentation and topology examples
 ```
 

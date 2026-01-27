@@ -11,8 +11,9 @@ from utils_graph import NODES
 
 #% >>> System parameters: 
 ## Simulation:
-T        = 1600.0
-dt       = 0.02
+T        = 2000.0
+dt       = 0.2   # Integration time-step
+Ts       = 1.0   # Fetching period
 time     = np.arange(0, T, dt)
 n_points = len(time)
 n_agents = len(NODES)
@@ -31,9 +32,8 @@ use_laplacian = True
 
 ## Adaptive gain: 
 omega                 = 1.0     # Timer oscillator frequency (rad/s) --> slope 1s/1s
-eta                   = 0.5     # adaptation gain
-eta_discrete          = 1.0e-6  # discrete adaptation gain
-gain_link             = 1e-2    # consensual law gain: W(alpha) = I - alpha*L
+eta                   = 2.0e-6  # adaptation gain
+link_gain             = 1e-2    # consensual law gain: W(alpha) = I - alpha*L
 alpha                 = 0.5     # consensual law parameter (for non-laplacian law)
 freeze_threshold_off  = 1e-2    # error-threshold to freeze gain evolution ("ε" in paper)
 freeze_threshold_on   = 0.050   # error-threshold to re-activate gain evolution ("ε̄" in paper)
@@ -42,6 +42,7 @@ disturbance_scale     = 1e-3
 
 params = {
     "dt":            dt,
+    "Ts":            Ts,
     "omega":         omega,
     "n_points":      n_points,
     "n_agents":      n_agents,
@@ -51,20 +52,19 @@ params = {
     "epsilon_on":    freeze_threshold_on,
     "active":        active,
     "nodes":         NODES,
-    # Discrete-time parameters:
     "alpha":         alpha,
-    "gain_link":     gain_link,
-    "eta_discrete":  eta_discrete,
+    "link_gain":     link_gain,
     "delta":         freeze_threshold_off,
     "disturbance":   disturbance_scale,
 }
 
 ## Disturbance: bounded known input
-gamma   = 0.4
+gamma   = 0.25
 beta    = 0.1
-kappa   = 1.0
-phi     = np.random.uniform(0, 1, (n_agents, n_points)) 
-nu = np.random.uniform(-gamma, gamma, (n_agents, n_points)) + beta + kappa * np.sin(2*np.pi*1.0*(time - phi))  
+kappa   = 0.75
+O       = np.random.uniform(-gamma, gamma, (n_agents, n_points))
+phi     = np.pi * O
+nu = np.random.uniform(-gamma, gamma, (n_agents, n_points)) + beta + kappa * np.sin(2*np.pi*2.0*time - phi)  
 
 ## Initial conditions:
 init_conditions = {
@@ -72,10 +72,6 @@ init_conditions = {
     "z": np.array([NODES[i+1]['z0'] for i in range(n_agents)]),
     "vtheta": np.zeros(n_agents)  # Initial adaptive gains
 }
-
-
-## Plot sign-power law: 
-utils_plot.plot_sign_power_law()
 
 
 # ## Dynamics:
@@ -360,8 +356,8 @@ def simulate_discrete_dynamics(params, init_conditions):
     n_points = params["n_points"]
     n_agents = params["n_agents"]
     alpha = params["alpha"]
-    gain_link = params["gain_link"]
-    eta = params["eta_discrete"]
+    link_gain = params["link_gain"]
+    eta = params["eta"]
     d_scale = params["disturbance"]
     delta = params["delta"]
 
@@ -388,11 +384,11 @@ def simulate_discrete_dynamics(params, init_conditions):
         sigma = x[:, k] - z[:, k]
         grad = np.sign(sigma)
 
-        if k % 5 == 0: 
+        if k % int(params["Ts"] / params["dt"]) == 0: 
             for i in range(n_agents): 
                 neighbors = NODES[i+1]['neighbors']
                 neighbors_idx = [n-1 for n in neighbors]
-                g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha=alpha, link_gain=gain_link, extra_param=1.0) 
+                g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha=alpha, link_gain=link_gain, extra_param=1.0) 
 
                 if np.abs(sigma[i]) > delta:
                     dvtheta[i] = 1.0
