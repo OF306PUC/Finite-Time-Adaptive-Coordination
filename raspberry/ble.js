@@ -1,7 +1,7 @@
 const { createBluetooth } = require('node-ble');
 const { bluetooth, destroy } = createBluetooth();
 
-const DELAY_LOOP = 500; // Delay between each loop iteration in milliseconds
+const DELAY_LOOP = 1000; // Delay between each loop iteration in milliseconds
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));    
