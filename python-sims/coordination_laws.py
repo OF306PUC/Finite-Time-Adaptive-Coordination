@@ -11,18 +11,18 @@ Consensual average law:
 - alpha parameters is to control the convergence speed: M(alpha) = I - alpha*L
 - Graph must be balanced and strongly connected
 """
-def gi(node_idx, virtual_states, neighbors_index, alpha=1e-1):
+def gi(node_idx, virtual_states, neighbors_index, link_gain=1e-1):
     N = len(neighbors_index)
     if N == 0:
         return 0.0
     diffs = np.array(virtual_states[node_idx] - virtual_states[neighbors_index])
-    return (-alpha) * np.sum(diffs) 
+    return (-link_gain) * np.sum(diffs) 
 
 """
 Javier's coordination law:
 - alpha parameter controls convergence speed
 """
-def vi(node_idx, virtual_states, neighbors_index, alpha=1e-1, link_gain=1e-1, extra_param=0.01): 
+def vi(node_idx, virtual_states, neighbors_index, alpha=1.0, link_gain=1e-1, extra_param=1.0): 
     N = len(neighbors_index)
     if N == 0:
         return 0.0

@@ -353,6 +353,7 @@ init_conditions = {
 def simulate_discrete_dynamics(params, init_conditions):
 
     # Synchronous dynamics - fetching
+    omega = params["omega"]
     n_points = params["n_points"]
     n_agents = params["n_agents"]
     alpha = params["alpha"]
@@ -364,6 +365,7 @@ def simulate_discrete_dynamics(params, init_conditions):
     # Full trajectories
     x = np.zeros((n_agents, n_points))
     z = np.zeros((n_agents, n_points))
+    g_func = np.zeros((n_agents, n_points))
     vartheta = np.zeros((n_agents, n_points))
 
     # Initial condition vector
@@ -384,19 +386,26 @@ def simulate_discrete_dynamics(params, init_conditions):
         sigma = x[:, k] - z[:, k]
         grad = np.sign(sigma)
 
+        # Discrete time equations: 
+        """
+        x[k+1] = x[k] + u[k] + nu[k]
+        z[k+1] = z[k] + g(z[k],v[k]) --> z[k] changes according to the consensus law every Ts = k * dt seconds
+        The previous discretization scheme changes the stability of the z[k] dynamics according to the choice of link gains alongside the graph topology.
+        """
         if k % int(params["Ts"] / params["dt"]) == 0: 
             for i in range(n_agents): 
                 neighbors = NODES[i+1]['neighbors']
                 neighbors_idx = [n-1 for n in neighbors]
-                g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha=alpha, link_gain=link_gain, extra_param=1.0) 
+                g[i] = cl.vi(i, z[:, k], neighbors_idx, alpha=alpha, link_gain=0.06414298) # for the asymptotic law (alpha = 1.0), link gain must be lower than 0.0641425 to ensure stability
 
                 if np.abs(sigma[i]) > delta:
                     dvtheta[i] = 1.0
                 else:
                     dvtheta[i] = 0.0
 
+        g_func[:, k] = g
         u = g - vartheta[:, k] * grad
-        xNew = x[:, k] + u + nu[:, k] * d_scale
+        xNew = x[:, k] + u + nu[:, k] * d_scale 
         zNew = z[:, k] + g 
         varthetaNew = vartheta[:, k] + eta * dvtheta
 
@@ -404,12 +413,13 @@ def simulate_discrete_dynamics(params, init_conditions):
         y[n_agents:2*n_agents] = zNew
         y[2*n_agents:3*n_agents] = varthetaNew
 
-    return x, z, vartheta
+    return x, z, g_func, vartheta
 
-x, z, vartheta = simulate_discrete_dynamics(params, init_conditions)
+x, z, g_func, vartheta = simulate_discrete_dynamics(params, init_conditions)
 t = np.linspace(0, T, n_points)
 utils_plot.plot_simulation(t, x, z, vartheta, params)
 utils_plot.plot_states(t, x, z, params, ref_state_num=1)
+utils_plot.plot_g_z_v_dynamics(g_func)
 utils_plot.plot_lyapunov(t, x, z, params)
 
 #%% END OF FILE

@@ -7,6 +7,10 @@ Communication between agents occurs through **Wi-Fi** and **Bluetooth Low Energy
 
 ## ⚙️ System Overview
 
+<p align="center">
+  <img src="docs/hardware.svg" width="80%">
+</p>
+
 The project includes several coordinated components:
 
 - **Node:**  

@@ -225,6 +225,32 @@ def plot_hysteresis_and_sign_function(x, z, dvtheta, params, agent=1):
     plt.show()
 
 
+def plot_g_z_v_dynamics(g_func):
+    n_agents, n_points = g_func.shape
+    t = np.linspace(0, n_points-1, n_points)
+
+    fig, axs = plt.subplots(1, 1, figsize=(12, 9))
+    for i in range(n_agents):
+        if n_agents <= 10:
+            axs.plot(t, g_func[i,:], linestyle='-', label=f'$g_{{{i+1}}}$')
+        else:
+            axs.plot(t, g_func[i,:])
+    
+    g_avg = np.mean(g_func, axis=0)
+    axs.plot(t, g_avg, '--k', label='$\\overline{g}$')
+
+    axs.set_title('Function $g_i(z_i,v_i) = v_i$ Dynamics')
+    axs.set_xlabel('Time (s)')
+    axs.set_ylabel('$g(t)$')
+    if n_agents <= 10:
+        axs.legend(ncol=3)
+    else:
+        axs.legend()
+    axs.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
 def plot_sign_power_law(): 
     x = np.linspace(-2,2,1000)
     alpha_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]

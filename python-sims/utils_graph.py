@@ -80,3 +80,16 @@ if __name__ == "__main__":
 
     print("Graph nodes:", G.nodes)
     print("Graph edges:", G.edges)
+
+    A = nx.adjacency_matrix(G).toarray()
+    D = np.diag(A.sum(axis=1))
+    L = D - A
+    eigvals = np.linalg.eigvals(L)
+    eigvals = np.sort(np.real(eigvals))
+    for i, eig in enumerate(eigvals):
+        print(f"Eigenvalue {i}: {eig:.8f}")
+
+    Ts = 1.0
+    k = 5
+    max_link_gain = 2.0 / (np.max(eigvals[1:]) * k)
+    print(f"Maximum allowable link gain for stability: {max_link_gain:.8f}")
