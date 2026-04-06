@@ -6,3 +6,4 @@ raspberry/python/__pycache__/
 raspberry/python/data/
 __pycache__/
 .venv/
+results/
