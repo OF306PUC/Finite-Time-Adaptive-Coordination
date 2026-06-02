@@ -98,13 +98,13 @@ if (TYPE == TYPE_BLE) {
     const http = require('http');
     const express = require('express');
     const axios = require('axios');
-    
+    const diag = require('./diag'); 
     const { bleGetDevices, bleGetState, bleGenerateManufacturerData, bleStopDiscovery, bleCleanup } = require('./ble');
     const { algo } = require('./algo');
     const { spawn } = require('child_process')
 
     let advProcess = null;
-    let nordicNeighbors = {};
+    let bleNeighbors = {};
 
     // BLE restart backoff state 
     let bleRestartDelay = 100;          // ms; doubles on each failure
@@ -120,6 +120,9 @@ if (TYPE == TYPE_BLE) {
     // Store data in RAM for consensus parameters/variables
     // New configuration posted in /updateParams route
     let params = { trigger: false }; 
+    
+    /* Logger for diagnosis */
+    diag.start(process.env.NODE_ID || (TYPE === TYPE_BRIDGE ? 'bridge' : TYPE)); 
 
     // Global variables related to the consensus algorithm
     let dynamicsLoopTimeoutId = null;     // ID for the dynamics loop (dt --> clock)
@@ -185,7 +188,7 @@ if (TYPE == TYPE_BLE) {
             try {
                 if (params.neighborTypes[id] === TYPE_BLE) {
                     const data = await withTimeout(
-                        bleGetState(nordicNeighbors[id]),
+                        bleGetState(bleNeighbors[id]),
                         axiosTimeoutMs,
                         { vstate: 0, enabled: false }
                     );
@@ -309,8 +312,13 @@ if (TYPE == TYPE_BLE) {
 
                 if (TYPE === TYPE_BRIDGE) {
                     startBleBridge();
-                    const nordicNeighborsRequired = updatedParams.neighbors.filter(id => updatedParams.neighborTypes[id] === TYPE_BLE).map(id => id);
+                    const bleNeighborsRequired = updatedParams.neighbors.filter(id => updatedParams.neighborTypes[id] === TYPE_BLE).map(id => id);
+                    /* Diagnosis */
+                    diag.recordCycleStart();
+                    const _diagT0 = Date.now();
                     nordicNeighbors = await bleGetDevices(nordicNeighborsRequired);
+                    diag.recordGetDevices(Date.now() - _diagT0, Object.keys(nordicNeighbors).length);
+                    /* Diagnosis */
                 }
 
                 // *** START BOTH LOOPS ***
@@ -321,6 +329,9 @@ if (TYPE == TYPE_BLE) {
                 dynamicsLoopTimeoutId = setTimeout(() => dynamicsLoop(t0 + params.dt), params.dt);
 
             } else if (!updatedParams.trigger && params.trigger) {
+                /* Diagnosis */
+                diag.recordCycleEnd(); 
+                /* Diagnosis */
                 if (networkLoopTimeoutId) {
                     clearTimeout(networkLoopTimeoutId);
                     networkLoopTimeoutId = null; 
@@ -332,7 +343,7 @@ if (TYPE == TYPE_BLE) {
                 if (TYPE === TYPE_BRIDGE) {
                     stopBleBridge(); 
                     try { await bleStopDiscovery(); } catch(_) { /* ignore */}
-                    nordicNeighbors = {}; 
+                    bleNeighbors = {}; 
                 }
                 latestNeighborVStates = []; 
                 latestNeighborEnabled = []; 

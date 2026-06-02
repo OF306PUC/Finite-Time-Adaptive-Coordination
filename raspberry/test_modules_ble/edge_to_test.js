@@ -104,7 +104,7 @@ if (TYPE == TYPE_BLE) {
     const { spawn } = require('child_process')
 
     let advProcess = null;
-    let nordicNeighbors = {};
+    let bleNeighbors = {};
 
     // BLE restart backoff state 
     let bleRestartDelay = 100;          // ms; doubles on each failure
@@ -185,7 +185,7 @@ if (TYPE == TYPE_BLE) {
             try {
                 if (params.neighborTypes[id] === TYPE_BLE) {
                     const data = await withTimeout(
-                        bleGetState(nordicNeighbors[id]),
+                        bleGetState(bleNeighbors[id]),
                         axiosTimeoutMs,
                         { vstate: 0, enabled: false }
                     );
@@ -309,8 +309,8 @@ if (TYPE == TYPE_BLE) {
 
                 if (TYPE === TYPE_BRIDGE) {
                     startBleBridge();
-                    const nordicNeighborsRequired = updatedParams.neighbors.filter(id => updatedParams.neighborTypes[id] === TYPE_BLE).map(id => id);
-                    nordicNeighbors = await bleGetDevices(nordicNeighborsRequired);
+                    const bleNeighborsRequired = updatedParams.neighbors.filter(id => updatedParams.neighborTypes[id] === TYPE_BLE).map(id => id);
+                    bleNeighbors = await bleGetDevices(bleNeighborsRequired);
                 }
 
                 // *** START BOTH LOOPS ***
@@ -332,7 +332,7 @@ if (TYPE == TYPE_BLE) {
                 if (TYPE === TYPE_BRIDGE) {
                     stopBleBridge(); 
                     try { await bleStopDiscovery(); } catch(_) { /* ignore */}
-                    nordicNeighbors = {}; 
+                    bleNeighbors = {}; 
                 }
                 latestNeighborVStates = []; 
                 latestNeighborEnabled = []; 

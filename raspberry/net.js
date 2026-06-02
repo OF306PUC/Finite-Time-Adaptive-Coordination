@@ -178,17 +178,17 @@ function createNodes(topologyConfig) {
 let TOPOLOGY;
 
 // 9node-ring-dir: ... ---> 4 ---> 1 ---> 9 ---> 5 ---> 2 ---> 6 ---> 8 ---> 3 ---> 7 ---> ...
-TOPOLOGY = [
-  {id: 1, ip: '192.168.0.190', type: TYPE_BLE,    enabled: true, neighbors: [4], clock: 500},
-  {id: 2, ip: '192.168.0.190', type: TYPE_WIFI,   enabled: true, neighbors: [5], clock: 500},
-  {id: 3, ip: '192.168.0.190', type: TYPE_BRIDGE, enabled: true, neighbors: [8], clock: 500},
-  {id: 4, ip: '192.168.0.198', type: TYPE_BLE,    enabled: true, neighbors: [7], clock: 500},
-  {id: 5, ip: '192.168.0.198', type: TYPE_WIFI,   enabled: true, neighbors: [9], clock: 500},
-  {id: 6, ip: '192.168.0.198', type: TYPE_BRIDGE, enabled: true, neighbors: [2], clock: 500},
-  {id: 7, ip: '192.168.0.179', type: TYPE_BLE,    enabled: true, neighbors: [3], clock: 500},
-  {id: 8, ip: '192.168.0.179', type: TYPE_WIFI,   enabled: true, neighbors: [6], clock: 500},
-  {id: 9, ip: '192.168.0.179', type: TYPE_BRIDGE, enabled: true, neighbors: [1], clock: 500},
-]; 
+// TOPOLOGY = [
+//   {id: 1, ip: '192.168.0.190', type: TYPE_BLE,    enabled: true, neighbors: [4], clock: 500},
+//   {id: 2, ip: '192.168.0.190', type: TYPE_WIFI,   enabled: true, neighbors: [5], clock: 500},
+//   {id: 3, ip: '192.168.0.190', type: TYPE_BRIDGE, enabled: true, neighbors: [8], clock: 500},
+//   {id: 4, ip: '192.168.0.198', type: TYPE_BLE,    enabled: true, neighbors: [7], clock: 500},
+//   {id: 5, ip: '192.168.0.198', type: TYPE_WIFI,   enabled: true, neighbors: [9], clock: 500},
+//   {id: 6, ip: '192.168.0.198', type: TYPE_BRIDGE, enabled: true, neighbors: [2], clock: 500},
+//   {id: 7, ip: '192.168.0.179', type: TYPE_BLE,    enabled: true, neighbors: [3], clock: 500},
+//   {id: 8, ip: '192.168.0.179', type: TYPE_WIFI,   enabled: true, neighbors: [6], clock: 500},
+//   {id: 9, ip: '192.168.0.179', type: TYPE_BRIDGE, enabled: true, neighbors: [1], clock: 500},
+// ]; 
 
 // 9node-clusters
 //       3 --- 9
@@ -262,38 +262,38 @@ TOPOLOGY = [
 // ... <-- 1 <-- 2 <-- 3 <-- 4 <-- 5 <-- 6 <-- 7 <-- 8 <-- 9 <-- 10 <-- 21 <-- 22 <-- 23 <-- 24 <-- 25 <-- 11 <-- 12 <-- 13 <-- 14 <-- 15 <-- 16 <-- 17 <-- 18 <-- 19 <-- 20 <-- 26 <-- 27 <-- 28 <-- 29 <-- 30 <-- ...
 // pi1=192.168.0.180  pi2=192.168.0.198  pi3=192.168.0.179  pi4=192.168.0.138  pi5=192.168.0.124
 // pi6=192.168.0.167  pi7=192.168.0.180  pi8=192.168.0.137  pi9=192.168.0.127  pi10=192.168.0.176
-// TOPOLOGY = [
-//  {id:  1, ip: '192.168.0.190', type: TYPE_BLE,    enabled:  true, neighbors: [ 2], clock: 500}, // pi1
-//  {id:  2, ip: '192.168.0.198', type: TYPE_BLE,    enabled:  true, neighbors: [ 3], clock: 500}, // pi2
-//  {id:  3, ip: '192.168.0.179', type: TYPE_BLE,    enabled:  true, neighbors: [ 4], clock: 500}, // pi3
-//  {id:  4, ip: '192.168.0.138', type: TYPE_BLE,    enabled:  true, neighbors: [ 5], clock: 500}, // pi4
-//  {id:  5, ip: '192.168.0.124', type: TYPE_BLE,    enabled:  true, neighbors: [ 6], clock: 500}, // pi5
-//  {id:  6, ip: '192.168.0.167', type: TYPE_BLE,    enabled:  true, neighbors: [ 7], clock: 500}, // pi6
-//  {id:  7, ip: '192.168.0.180', type: TYPE_BLE,    enabled:  true, neighbors: [ 8], clock: 500}, // pi7
-//  {id:  8, ip: '192.168.0.137', type: TYPE_BLE,    enabled:  true, neighbors: [ 9], clock: 500}, // pi8
-//  {id:  9, ip: '192.168.0.127', type: TYPE_BLE,    enabled:  true, neighbors: [10], clock: 500}, // pi9
-//  {id: 10, ip: '192.168.0.176', type: TYPE_BLE,    enabled:  true, neighbors: [21], clock: 500}, // pi10
-//  {id: 11, ip: '192.168.0.190', type: TYPE_WIFI,   enabled:  true, neighbors: [12], clock: 500}, // pi1
-//  {id: 12, ip: '192.168.0.198', type: TYPE_WIFI,   enabled:  true, neighbors: [13], clock: 500}, // pi2
-//  {id: 13, ip: '192.168.0.179', type: TYPE_WIFI,   enabled:  true, neighbors: [14], clock: 500}, // pi3
-//  {id: 14, ip: '192.168.0.138', type: TYPE_WIFI,   enabled:  true, neighbors: [15], clock: 500}, // pi4
-//  {id: 15, ip: '192.168.0.124', type: TYPE_WIFI,   enabled:  true, neighbors: [16], clock: 500}, // pi5
-//  {id: 16, ip: '192.168.0.167', type: TYPE_WIFI,   enabled:  true, neighbors: [17], clock: 500}, // pi6
-//  {id: 17, ip: '192.168.0.180', type: TYPE_WIFI,   enabled:  true, neighbors: [18], clock: 500}, // pi7
-//  {id: 18, ip: '192.168.0.137', type: TYPE_WIFI,   enabled:  true, neighbors: [19], clock: 500}, // pi8
-//  {id: 19, ip: '192.168.0.127', type: TYPE_WIFI,   enabled:  true, neighbors: [20], clock: 500}, // pi9
-//  {id: 20, ip: '192.168.0.176', type: TYPE_WIFI,   enabled:  true, neighbors: [26], clock: 500}, // pi10
-//  {id: 21, ip: '192.168.0.190', type: TYPE_BRIDGE, enabled:  true, neighbors: [22], clock: 500}, // pi1
-//  {id: 22, ip: '192.168.0.198', type: TYPE_BRIDGE, enabled:  true, neighbors: [23], clock: 500}, // pi2
-//  {id: 23, ip: '192.168.0.179', type: TYPE_BRIDGE, enabled:  true, neighbors: [24], clock: 500}, // pi3
-//  {id: 24, ip: '192.168.0.138', type: TYPE_BRIDGE, enabled:  true, neighbors: [25], clock: 500}, // pi4
-//  {id: 25, ip: '192.168.0.124', type: TYPE_BRIDGE, enabled:  true, neighbors: [11], clock: 500}, // pi5
-//  {id: 26, ip: '192.168.0.167', type: TYPE_BRIDGE, enabled:  true, neighbors: [27], clock: 500}, // pi6
-//  {id: 27, ip: '192.168.0.180', type: TYPE_BRIDGE, enabled:  true, neighbors: [28], clock: 500}, // pi7
-//  {id: 28, ip: '192.168.0.137', type: TYPE_BRIDGE, enabled:  true, neighbors: [29], clock: 500}, // pi8
-//  {id: 29, ip: '192.168.0.127', type: TYPE_BRIDGE, enabled:  true, neighbors: [30], clock: 500}, // pi9
-//  {id: 30, ip: '192.168.0.176', type: TYPE_BRIDGE, enabled:  true, neighbors: [ 1], clock: 500}, // pi10
-// ];
+TOPOLOGY = [
+ {id:  1, ip: '192.168.0.190', type: TYPE_BLE,    enabled:  true, neighbors: [ 2], clock: 500}, // pi1
+ {id:  2, ip: '192.168.0.198', type: TYPE_BLE,    enabled:  true, neighbors: [ 3], clock: 500}, // pi2
+ {id:  3, ip: '192.168.0.179', type: TYPE_BLE,    enabled:  true, neighbors: [ 4], clock: 500}, // pi3
+ {id:  4, ip: '192.168.0.138', type: TYPE_BLE,    enabled:  true, neighbors: [ 5], clock: 500}, // pi4
+ {id:  5, ip: '192.168.0.124', type: TYPE_BLE,    enabled:  true, neighbors: [ 6], clock: 500}, // pi5
+ {id:  6, ip: '192.168.0.167', type: TYPE_BLE,    enabled:  true, neighbors: [ 7], clock: 500}, // pi6
+ {id:  7, ip: '192.168.0.180', type: TYPE_BLE,    enabled:  true, neighbors: [ 8], clock: 500}, // pi7
+ {id:  8, ip: '192.168.0.137', type: TYPE_BLE,    enabled:  true, neighbors: [ 9], clock: 500}, // pi8
+ {id:  9, ip: '192.168.0.127', type: TYPE_BLE,    enabled:  true, neighbors: [10], clock: 500}, // pi9
+ {id: 10, ip: '192.168.0.176', type: TYPE_BLE,    enabled:  true, neighbors: [21], clock: 500}, // pi10
+ {id: 11, ip: '192.168.0.190', type: TYPE_WIFI,   enabled:  true, neighbors: [12], clock: 500}, // pi1
+ {id: 12, ip: '192.168.0.198', type: TYPE_WIFI,   enabled:  true, neighbors: [13], clock: 500}, // pi2
+ {id: 13, ip: '192.168.0.179', type: TYPE_WIFI,   enabled:  true, neighbors: [14], clock: 500}, // pi3
+ {id: 14, ip: '192.168.0.138', type: TYPE_WIFI,   enabled:  true, neighbors: [15], clock: 500}, // pi4
+ {id: 15, ip: '192.168.0.124', type: TYPE_WIFI,   enabled:  true, neighbors: [16], clock: 500}, // pi5
+ {id: 16, ip: '192.168.0.167', type: TYPE_WIFI,   enabled:  true, neighbors: [17], clock: 500}, // pi6
+ {id: 17, ip: '192.168.0.180', type: TYPE_WIFI,   enabled:  true, neighbors: [18], clock: 500}, // pi7
+ {id: 18, ip: '192.168.0.137', type: TYPE_WIFI,   enabled:  true, neighbors: [19], clock: 500}, // pi8
+ {id: 19, ip: '192.168.0.127', type: TYPE_WIFI,   enabled:  true, neighbors: [20], clock: 500}, // pi9
+ {id: 20, ip: '192.168.0.176', type: TYPE_WIFI,   enabled:  true, neighbors: [26], clock: 500}, // pi10
+ {id: 21, ip: '192.168.0.190', type: TYPE_BRIDGE, enabled:  true, neighbors: [22], clock: 500}, // pi1
+ {id: 22, ip: '192.168.0.198', type: TYPE_BRIDGE, enabled:  true, neighbors: [23], clock: 500}, // pi2
+ {id: 23, ip: '192.168.0.179', type: TYPE_BRIDGE, enabled:  true, neighbors: [24], clock: 500}, // pi3
+ {id: 24, ip: '192.168.0.138', type: TYPE_BRIDGE, enabled:  true, neighbors: [25], clock: 500}, // pi4
+ {id: 25, ip: '192.168.0.124', type: TYPE_BRIDGE, enabled:  true, neighbors: [11], clock: 500}, // pi5
+ {id: 26, ip: '192.168.0.167', type: TYPE_BRIDGE, enabled:  true, neighbors: [27], clock: 500}, // pi6
+ {id: 27, ip: '192.168.0.180', type: TYPE_BRIDGE, enabled:  true, neighbors: [28], clock: 500}, // pi7
+ {id: 28, ip: '192.168.0.137', type: TYPE_BRIDGE, enabled:  true, neighbors: [29], clock: 500}, // pi8
+ {id: 29, ip: '192.168.0.127', type: TYPE_BRIDGE, enabled:  true, neighbors: [30], clock: 500}, // pi9
+ {id: 30, ip: '192.168.0.176', type: TYPE_BRIDGE, enabled:  true, neighbors: [ 1], clock: 500}, // pi10
+];
 
 // n30-ring4
 // ... <---> 1 <---> 2 <---> 3 <---> ... 28 <---> 29 <---> 30 <---> ...
