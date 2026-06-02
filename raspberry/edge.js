@@ -316,8 +316,8 @@ if (TYPE == TYPE_BLE) {
                     /* Diagnosis */
                     diag.recordCycleStart();
                     const _diagT0 = Date.now();
-                    nordicNeighbors = await bleGetDevices(nordicNeighborsRequired);
-                    diag.recordGetDevices(Date.now() - _diagT0, Object.keys(nordicNeighbors).length);
+                    bleNeighbors = await bleGetDevices(bleNeighborsRequired);
+                    diag.recordGetDevices(Date.now() - _diagT0, Object.keys(bleNeighbors).length);
                     /* Diagnosis */
                 }
 
