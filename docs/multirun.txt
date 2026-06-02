@@ -5,10 +5,10 @@ curl http://localhost:3000/getParams | jq .
 curl -X POST http://localhost:3000/startMultiRun \
   -H "Content-Type: application/json" \
   -d "$(curl -s http://localhost:3000/getParams | jq '. + {
-    filename: "9nodes-dring",
-    numRuns: 2,
-    runDuration: 1000000,
-    runPause: 50000
+    filename: "30nodes-dring",
+    numRuns: 50,
+    runDuration: 600000,
+    runPause: 5000
   }')"
 
 curl -X POST http://localhost:3000/startMultiRun \
