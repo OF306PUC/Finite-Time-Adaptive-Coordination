@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plotly Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+  <!-- Dropdown for selecting the experiment -->
+  <select id="dropdown">
+    <option value="" disabled selected>Select an experiment</option>
+  </select>
+
+  <!-- Dropdown for selecting a run within a multi-run experiment (hidden for single runs) -->
+  <select id="run-dropdown" style="display:none">
+    <option value="" disabled selected>Select a run</option>
+  </select>
+
+  <!-- Plot for displaying the state, vstate and vartheta results of that directory -->
+  <div id="statePlot"></div>
+  <div id="vstatePlot"></div>
+  <div id="varthetaPlot"></div>
+
+  <script src="update-data.js"></script>
+
+</body>
+</html>

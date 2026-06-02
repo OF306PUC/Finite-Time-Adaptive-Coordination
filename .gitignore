@@ -1,0 +1,16 @@
+nordic/build*/
+raspberry/data/
+raspberry/node_modules/
+raspberry/package-lock.json
+raspberry/python/__pycache__/
+raspberry/python/data/
+raspberry/multirun.txt
+
+__pycache__/
+.venv/
+results/
+render/
+test/
+python/
+
+experimental_analysis/

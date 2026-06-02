@@ -1,0 +1,55 @@
+=== pi1 ===
+plant123@192.168.0.190's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000065490 seconds fast of NTP time
+=== pi2 ===
+control@192.168.0.198's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000027105 seconds fast of NTP time
+=== pi3 ===
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000015633 seconds slow of NTP time
+=== pi4 ===
+control@192.168.0.138's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000008609 seconds fast of NTP time
+=== pi5 ===
+control@192.168.0.124's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000558263 seconds fast of NTP time
+=== pi6 ===
+control@192.168.0.167's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000023202 seconds fast of NTP time
+=== pi7 ===
+pi@192.168.0.180's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000033693 seconds slow of NTP time
+=== pi8 ===
+raspberrypi@192.168.0.137's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000031650 seconds slow of NTP time
+=== pi9 ===
+control@192.168.0.127's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000011521 seconds slow of NTP time
+=== pi10 ===
+control@192.168.0.176's password: 
+Reference ID    : C0A80091 (192.168.0.145)
+Stratum         : 4
+System time     : 0.000010374 seconds slow of NTP time
+
+sudo nmcli device wifi connect "red-jetson" password "jetson-wifi" ifname wlan1
+
+echo "server 192.168.0.145 iburst minpoll 1 maxpoll 4" | sudo tee -a /etc/chrony/chrony.conf
+
+sudo systemctl restart chrony

@@ -1,0 +1,24 @@
+curl http://localhost:3000/getParams | jq .
+
+
+# ring (50 runs, no mid-run events)
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "9nodes-dring",
+    numRuns: 30,
+    runDuration: 400000,
+    runPause: 50000
+  }')"
+
+
+# clusters (50 runs, enable nodes 21 & 30 at t=500s)
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "30nodes-clusters",
+    numRuns: 50,
+    runDuration: 1000000,
+    runPause: 5000,
+    midRunEvents: [{ delayMs: 500000, nodeUpdates: { "21": { "enabled": true }, "30": { "enabled": true } } }]
+  }')"
