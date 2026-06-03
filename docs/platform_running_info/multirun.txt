@@ -1,0 +1,33 @@
+## >>> Params from each RPI's process
+curl http://localhost:3000/getParams | jq .
+
+## >>> dring & ring (30 runs, no mid-run events)
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "30nodes-dring",
+    numRuns: 30,
+    runDuration: 600000,
+    runPause: 5000
+  }')"
+
+## >>> clusters (30 runs, enable nodes 21 & 30 at t=500s)
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "30nodes-clusters",
+    numRuns: 30,
+    runDuration: 600000,
+    runPause: 5000,
+    midRunEvents: [{ delayMs: 500000, nodeUpdates: { "21": { "enabled": true }, "30": { "enabled": true } } }]
+  }')"
+
+## >>> Testing purposes
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "diag-test",
+    numRuns: 10,
+    runDuration: 60000,
+    runPause: 5000
+  }')"
