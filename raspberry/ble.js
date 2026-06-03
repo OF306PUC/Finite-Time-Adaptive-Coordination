@@ -7,7 +7,7 @@ const { bluetooth, destroy } = createBluetooth();
 // Configuration
 // ---------------------------------------------------------------------------
 
-const SCAN_INTERVAL_MS  = 100;
+const SCAN_INTERVAL_MS  = 200;
 const MAX_ATTEMPTS      = 30;
 const LABCTRL_NAME      = 'LABCTRL';
 const MANUFACTURER_ID   = 0x0059;            // Nordic Semiconductor
@@ -55,7 +55,7 @@ async function bleStartDiscovery() {
             DuplicateData: true,
         });
     } catch (err) {
-        console.warn('[BLE] setDiscoveryFilter failed:', err.message ?? err);
+        /* ignore */ //console.warn('[BLE] setDiscoveryFilter failed:', err.message ?? err);
     }
     await adapter.startDiscovery();
 }
@@ -132,14 +132,12 @@ function _extractPayload(dataRaw) {
  * Scan for BLE devices and return { nodeId → device } for every ID in
  * `neighborsRequired`. Retries every SCAN_INTERVAL_MS up to MAX_ATTEMPTS.
  *
- * Discovery is left ON after return so subsequent bleGetState() calls keep
- * receiving fresh advertising data. Call bleStopDiscovery() / bleCleanup()
- * when consensus stops (edge.js does this in its trigger-off branch and
- * SIGTERM/SIGINT handlers).
- *
  * @param {number[]} neighborsRequired  – 1-based node IDs to discover
  * @returns {Promise<Record<number, object>>}
  */
+
+const _uuidClassification = new Map(); 
+
 async function bleGetDevices(neighborsRequired) {
     const bleNeighbors = {};
     const found = new Set();
@@ -153,17 +151,38 @@ async function bleGetDevices(neighborsRequired) {
         const uuids = await adapter.devices();
 
         for (const uuid of uuids) {
-            try {
-                const device = await adapter.getDevice(uuid);
+            /* Skip uuids we've añready classified as non-(BLE-name-for-network) */
+            if (_uuidClassification.has(uuid) && _uuidClassification.get(uuid) == null) {
+                continue; 
+            }
 
+            try {
+                /* Only hit this branch for uuids we've already proxied - no new match rules for DBus */
+                if (_uuidClassification.has(uuid)) {
+                    const cachedNode = _uuidClassification.get(uuid); 
+                    if (neighborsRequired.includes(cachedNode) && !found.has(cachedNode)) {
+                        const device = await adapter.getDevice(uuid); 
+                        bleNeighbors[cachedNode] = device; 
+                        found.add(cachedNode); 
+                        console.log(`[BLE] Found (cached) node ${cachedNode}`); 
+                    }
+                    continue; 
+                }
+
+                /* Unknown uuid: classify it ==> only path that create a new proxy that holds match rules for DBus */
+                const device = await adapter.getDevice(uuid);
                 const name = await _tryGetName(device);
-                if (name !== LABCTRL_NAME) continue;
+                if (name !== LABCTRL_NAME) {
+                    _uuidClassification.set(uuid, null); /* Marked as non-(BLE-name-for-network) forever */
+                    continue;
+                }
 
                 const dataRaw = await _tryGetManufacturerData(device);
                 const buf     = _extractPayload(dataRaw);
                 if (!buf) continue;
 
                 const node = buf.readUInt8(1);
+                _uuidClassification.set(uuid, node); 
 
                 if (neighborsRequired.includes(node) && !found.has(node)) {
                     console.log(`[BLE] Found required node ${node}`);

@@ -207,6 +207,7 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
         case UART_RX_DISABLED: 
             // Re-enable RX after processing the message
             uart_rx_enable(dev, rx_buf, sizeof(rx_buf), RX_TIMEOUT); 
+            break; 
         
         default: 
             break; 
