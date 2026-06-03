@@ -182,7 +182,7 @@ if (TYPE == TYPE_BLE) {
     // Auxiliary function to return neighbor virtual states 
     async function getNeighborStates() {
         // Cap each axios request at half the slow-loop period, with a floor.
-        const axiosTimeoutMs = Math.max(50, Math.floor((params.clock ?? 100) / 2));
+        const axiosTimeoutMs = Math.max(50, Math.floor((params.clock ?? 100) - 50));
  
         const results = await Promise.all(params.neighbors.map(async (id) => {
             try {
