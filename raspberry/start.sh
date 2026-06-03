@@ -14,6 +14,14 @@
 
 set -euo pipefail
 
+# Ensure all scripts in this directory are executable
+chmod +x "$(dirname "${BASH_SOURCE[0]}")"/*.sh
+
+if ! command -v tmux &>/dev/null; then
+    echo "tmux not found — installing..."
+    sudo apt-get install -y --no-install-recommends tmux
+fi
+
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SESSION="labctrl"
 
@@ -21,8 +29,9 @@ SESSION="labctrl"
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 
 cd "$DIR"
-tmux new-session -d -s "$SESSION" -n ble    "node back.js ble;    echo '[ble stopped] press enter'; read"
-tmux new-window     -t "$SESSION" -n wifi   "node back.js wifi;   echo '[wifi stopped] press enter'; read"
-tmux new-window     -t "$SESSION" -n bridge "node back.js bridge; echo '[bridge stopped] press enter'; read"
-tmux select-window  -t "$SESSION:ble"
+# Single window split into 3 vertical panes
+tmux new-session  -d -s "$SESSION" "node back.js ble;    echo '[ble stopped]';    read"
+tmux split-window -t "$SESSION"    "node back.js wifi;   echo '[wifi stopped]';   read"
+tmux split-window -t "$SESSION"    "node back.js bridge; echo '[bridge stopped]'; read"
+tmux select-layout -t "$SESSION" even-vertical   # equal height panes
 tmux attach-session -t "$SESSION"
