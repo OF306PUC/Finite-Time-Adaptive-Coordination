@@ -15,7 +15,7 @@ PI_DEST="$HOME/Finite-Time-Adaptive-Coordination/raspberry"
 
 echo "=== [1/5] System packages ==="
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends expect bluez
+sudo apt-get install -y --no-install-recommends expect bluez tmux
 
 # serial port access (for /dev/ttyACM0 — Nordic nRF52840)
 sudo usermod -aG dialout "$USER"
