@@ -179,36 +179,68 @@ if (TYPE == TYPE_BLE) {
         return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)); 
     }
 
-    // Auxiliary function to return neighbor virtual states 
+    // Module-level cache. One entry per neighbor id with last good values.
+    // Prevents a transient fetch failure from injecting spurious zeros into
+    // the consensus update.
+    const _neighborStateCache = new Map();
+    // Max age of cached state before we consider it too stale to use, even
+    // in lieu of a fresh value. Beyond this, return enabled=false so the
+    // algorithm can mask the neighbor out properly. Set ~3 × clock period;
+    // adjust based on your tolerance for missing-link behavior.
+    const NEIGHBOR_CACHE_MAX_AGE_MS = 2000;
+
     async function getNeighborStates() {
-        // Cap each axios request at half the slow-loop period, with a floor.
-        const axiosTimeoutMs = Math.max(50, Math.floor((params.clock ?? 100) - 50));
- 
+        // Tighter timeout — clock/2 instead of clock-50. With 4 neighbors in
+        // parallel, the typical case is well under this. Failing fast means
+        // we fall back to cache rather than burning ~1s on a stuck request.
+        const fetchTimeoutMs = Math.max(50, Math.floor((params.clock ?? 1000) / 2));
+        const now = Date.now();
+
         const results = await Promise.all(params.neighbors.map(async (id) => {
             try {
+                let fresh;
+
                 if (params.neighborTypes[id] === TYPE_BLE) {
                     const data = await withTimeout(
                         bleGetState(bleNeighbors[id]),
-                        axiosTimeoutMs,
-                        { vstate: 0, enabled: false }
+                        fetchTimeoutMs,
+                        null   // sentinel; handled below
                     );
-                    return { vstate: Number(data.vstate), enabled: Boolean(data.enabled) };
+                    if (data === null || data.vstate === null || data.ok === false) {
+                        throw new Error('BLE state unavailable');
+                    }
+                    fresh = {
+                        vstate:  Number(data.vstate),
+                        enabled: Boolean(data.enabled),
+                    };
+                } else {
+                    const response = await axios.get(
+                        `${params.neighborAddresses[id]}/getVState`,
+                        { timeout: fetchTimeoutMs }
+                    );
+                    fresh = {
+                        vstate:  Number(response.data.vstate),
+                        enabled: Boolean(response.data.enabled),
+                    };
                 }
-                const response = await axios.get(
-                    `${params.neighborAddresses[id]}/getVState`,
-                    { timeout: axiosTimeoutMs }
-                );
-                return {
-                    vstate:  Number(response.data.vstate),
-                    enabled: Boolean(response.data.enabled),
-                };
+
+                _neighborStateCache.set(id, { ...fresh, ts: now });
+                return fresh;
+
             } catch (err) {
-                // Isolate failures: one neighbor's failure must not poison the rest.
-                console.warn(`[NET] neighbor ${id} fetch failed:`, err.message ?? err);
+                const cached = _neighborStateCache.get(id);
+                if (cached && (now - cached.ts) < NEIGHBOR_CACHE_MAX_AGE_MS) {
+                    // Fresh enough cached value — return it but flag as not-currently-live.
+                    // The algorithm should treat `enabled: false` as "ignore this neighbor"
+                    // for the duration of the outage, while keeping the vstate value to
+                    // prevent the zero-injection artifact in case enabled is ignored.
+                    return { vstate: cached.vstate, enabled: false };
+                }
+                // No cache or cache too stale — neighbor truly unavailable.
                 return { vstate: 0, enabled: false };
             }
         }));
- 
+
         return {
             neighborVStates: results.map(r => r.vstate),
             neighborEnabled: results.map(r => r.enabled),
@@ -239,12 +271,16 @@ if (TYPE == TYPE_BLE) {
         // 4. Broadcast via BLE (only needs to happen at the slow network update rate)
         if (TYPE === TYPE_BRIDGE && advProcess?.stdin?.writable) {
             const bleCommand = `manufacturer 0x0059 0x7` + bleGenerateManufacturerData(params.enabled, params.node, state.vstate) + `\r`;
-            advProcess.stdin.write(bleCommand);
+            const ok = advProcess.stdin.write(bleCommand);
+            if (!ok) console.warn('[BLE] adv stdin backpressured, skipping this update');
         }
 
         // 5. Schedule next run
-        const drift = Date.now() - nextTick; 
-        networkLoopTimeoutId = setTimeout(() => networkFetchLoop(nextTick + params.clock), Math.max(0, params.clock - drift)); 
+        const drift = Date.now() - nextTick;
+        // Floor at 10% of clock period so even slow cycles preserve breathing room
+        // for the dynamics loop and the BLE adv update to run.
+        const delayMs = Math.max(params.clock * 0.1, params.clock - drift);
+        networkLoopTimeoutId = setTimeout(() => networkFetchLoop(nextTick + params.clock), delayMs);
     }
 
     /**
@@ -274,7 +310,8 @@ if (TYPE == TYPE_BLE) {
 
         // 2. Schedule the next iteration using the DT period (params.dt)
         const drift = Date.now() - nextTick;
-        dynamicsLoopTimeoutId = setTimeout(() => dynamicsLoop(nextTick + params.dt), Math.max(0, params.dt - drift));
+        const delayMs = Math.max(params.dt * 0.1, params.dt - drift);
+        dynamicsLoopTimeoutId = setTimeout(() => dynamicsLoop(nextTick + params.dt), delayMs);
     }
 
     // Edge-process: on params message received from backend-process

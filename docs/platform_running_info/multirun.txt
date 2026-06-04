@@ -6,8 +6,8 @@ curl -X POST http://localhost:3000/startMultiRun \
   -H "Content-Type: application/json" \
   -d "$(curl -s http://localhost:3000/getParams | jq '. + {
     filename: "30nodes-ring",
-    numRuns: 30,
-    runDuration: 1200000,
+    numRuns: 5,
+    runDuration: 1500000,
     runPause: 5000
   }')"
 
