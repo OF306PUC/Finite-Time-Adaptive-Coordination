@@ -24,14 +24,16 @@ fi
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SESSION="labctrl"
+LOGS="$DIR/logs"
+mkdir -p "$LOGS"
 
 # Kill any existing session
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 
 cd "$DIR"
-# Single window split into 3 vertical panes
-tmux new-session  -d -s "$SESSION" "node back.js ble;    echo '[ble stopped]';    read"
-tmux split-window -t "$SESSION"    "node back.js wifi;   echo '[wifi stopped]';   read"
-tmux split-window -t "$SESSION"    "node back.js bridge; echo '[bridge stopped]'; read"
-tmux select-layout -t "$SESSION" even-vertical   # equal height panes
+# Single window split into 3 vertical panes, stdout+stderr tee'd to log files
+tmux new-session  -d -s "$SESSION" "node back.js ble    |& tee $LOGS/ble.log;    echo '[ble stopped]';    read"
+tmux split-window -t "$SESSION"    "node back.js wifi   |& tee $LOGS/wifi.log;   echo '[wifi stopped]';   read"
+tmux split-window -t "$SESSION"    "node back.js bridge |& tee $LOGS/bridge.log; echo '[bridge stopped]'; read"
+tmux select-layout -t "$SESSION" even-vertical
 tmux attach-session -t "$SESSION"

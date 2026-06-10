@@ -32,13 +32,21 @@ async function loggerStart(params) {
 // Function to write the data lines of the .json logger file 
 async function loggerLine(state) {
     try {
+        // Row format:
+        //   [timestamp, state, vstate, vartheta,
+        //    nb0_vstate, nb0_received,  nb1_vstate, nb1_received, ...]
+        // received: 1 = fresh update, 0 = cache hit (missed packet)
+        const nbVStates   = state.neighborVStates  ?? [];
+        const nbReceived  = state.neighborReceived ?? nbVStates.map(() => 1);
+        const nbInterleaved = nbVStates.flatMap((v, i) => [v, nbReceived[i] ? 1 : 0]);
+
         const arr = [
-            state.timestamp, 
-            state.state, 
-            state.vstate, 
-            state.vartheta, 
-            ...state.neighborVStates
-        ]; 
+            state.timestamp,
+            state.state,
+            state.vstate,
+            state.vartheta,
+            ...nbInterleaved
+        ];
 
         if (isEnable) {
             if (isFirstLine) {
@@ -66,13 +74,24 @@ async function loggerEnd() {
 
             if (objData.data.length > 0) {
                 let dataTransposed = objData.data[0].map((_, i) => objData.data.map(row => row[i]));
-                objData.data = {}; 
+                objData.data = {};
                 objData.data.timestamp = dataTransposed[0];
-                objData.data.state = dataTransposed[1];
-                objData.data.vstate = dataTransposed[2];
-                objData.data.vartheta = dataTransposed[3];
-                for (let i in objData.params.neighbors) {
-                    objData.data[objData.params.neighbors[i]] = dataTransposed[parseInt(i) + 4];
+                objData.data.state     = dataTransposed[1];
+                objData.data.vstate    = dataTransposed[2];
+                objData.data.vartheta  = dataTransposed[3];
+                // Neighbour columns are interleaved: [nb0_vstate, nb0_received, nb1_vstate, ...]
+                // Fall back to legacy single-column layout if row length matches old format.
+                const nNeighbors = objData.params.neighbors.length;
+                const isNewFormat = dataTransposed.length >= 4 + nNeighbors * 2;
+                for (let i = 0; i < nNeighbors; i++) {
+                    const id = objData.params.neighbors[i];
+                    if (isNewFormat) {
+                        objData.data[id]           = dataTransposed[4 + i * 2];      // vstate received
+                        objData.data[`rx_${id}`]   = dataTransposed[4 + i * 2 + 1]; // 1=fresh, 0=missed
+                    } else {
+                        // Legacy: single vstate column per neighbour (no received flag)
+                        objData.data[id] = dataTransposed[4 + i];
+                    }
                 }
             }
             await fs.writeFile(filepath, JSON.stringify(objData, null, 2), 'utf8');

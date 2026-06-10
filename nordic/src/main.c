@@ -189,24 +189,19 @@ static void network_fetching_thread(void) {
             }
 
             if (observed) {
-                // Drain the queue if new BLE data arrived (non-blocking).
-                // With BT_LE_SCAN_OPT_FILTER_DUPLICATE the controller reports each
-                // address only once per scan session, so for a 1-neighbor directed
-                // ring the queue is empty on most ticks. Logging is decoupled so
-                // one serial frame is sent every clock tick regardless.
                 if (!k_msgq_get(&custom_observer_msg_queue, &neighbor_info, K_NO_WAIT)) {
                     k_mutex_lock(&coordination_mutex, K_FOREVER);
                     if (coordination.enabled) {
                         memcpy(coordination.neighbor_vstates, neighbor_info.vstates, sizeof(neighbor_info.vstates));
                         memcpy(coordination.neighbor_enabled, neighbor_info.enabled, sizeof(neighbor_info.enabled));
                     }
+                    memcpy(&log_data_copy, &coordination, sizeof(coordination_params)); 
                     k_mutex_unlock(&coordination_mutex);
+                    /**
+                     * Log only when fresh neighbor data was received (event-based)
+                     */
+                    serial_log_coordination_task(&log_data_copy);
                 }
-                // Always log once per network tick, using latest available neighbor state.
-                k_mutex_lock(&coordination_mutex, K_FOREVER);
-                memcpy(&log_data_copy, &coordination, sizeof(coordination_params));
-                k_mutex_unlock(&coordination_mutex);
-                serial_log_coordination_task(&log_data_copy);
             }
 
         } else {

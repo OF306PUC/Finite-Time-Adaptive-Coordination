@@ -1,52 +1,45 @@
 #!/usr/bin/env bash
-# Pull organized CSV data from all Raspberry Pis into data/{pi1..pi10}/.
+# Pull run data from all (or selected) Raspberry Pis into results/raw/.
 # SSH user and IP are resolved from ~/.ssh/config — no hardcoding needed.
 #
 # Usage:
-#   ./scripts/pull_from_rpi.sh <topology> [pi1 pi2 ...]
+#   ./scripts/pull_from_rpi.sh <folder> [pi1 pi2 ...]
 #
-#   <topology>   — experiment folder name on the Pi (e.g. 30nodes-dring)
-#   [pi1 pi2 …]  — optional subset of Pis; omit to pull from all 10
+#   <folder>     — folder inside ~/Finite-Time-Adaptive-Coordination/raspberry/
+#                  on each Pi  (e.g. data-ring, data-clusters)
+#   [pi1 pi2 …]  — optional subset; omit to pull from all 10
 #
 # Examples:
-#   ./scripts/pull_from_rpi.sh 30nodes-dring
-#   ./scripts/pull_from_rpi.sh 18nodes-ring pi3 pi7
-#
-# Output:
-#   data/pi1/<topology>/{ble,wifi,bridge}/
-#   data/pi2/<topology>/{ble,wifi,bridge}/
-#   ...
+#   ./scripts/pull_from_rpi.sh data-ring
+#   ./scripts/pull_from_rpi.sh data-ring pi3 pi7
 
 set -euo pipefail
 
-# ── Configuration ──────────────────────────────────────────────────────────────
-PI_BASE_ROOT="~/Finite-Time-Adaptive-Coordination/scripts"
+# ── Configuration ─────────────────────────────────────────────────────────────
+PI_BASE_ROOT="~/Finite-Time-Adaptive-Coordination/raspberry"
 ALL_PIS=(pi1 pi2 pi3 pi4 pi5 pi6 pi7 pi8 pi9 pi10)
-# ───────────────────────────────────────────────────────────────────────────────
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
+# ─────────────────────────────────────────────────────────────────────────────
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <topology> [pi1 pi2 ...]" >&2
-    echo "  e.g: $0 30nodes-dring" >&2
-    echo "  e.g: $0 18nodes-ring pi3 pi7" >&2
+    echo "Usage: $0 <folder> [pi1 pi2 ...]" >&2
+    echo "  e.g: $0 data-ring" >&2
+    echo "  e.g: $0 data-ring pi3 pi7" >&2
     exit 1
 fi
 
-TOPOLOGY="$1"
+FOLDER="$1"
 shift
 
-PI_BASE="${PI_BASE_ROOT}/${TOPOLOGY}"
-
+REMOTE_PATH="${PI_BASE_ROOT}/${FOLDER}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LOCAL_DATA="$REPO_ROOT/experimental_analysis"
+LOCAL_DATA="$REPO_ROOT/results/raw"
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
-
-# ── Argument parsing ───────────────────────────────────────────────────────────
-declare -a TARGETS
-
+# ── Target Pis ────────────────────────────────────────────────────────────────
 if [ $# -eq 0 ]; then
     TARGETS=("${ALL_PIS[@]}")
 else
+    TARGETS=()
     for arg in "$@"; do
         valid=0
         for pi in "${ALL_PIS[@]}"; do [ "$arg" == "$pi" ] && valid=1 && break; done
@@ -58,50 +51,30 @@ else
     done
 fi
 
-# ── Per-Pi pull ────────────────────────────────────────────────────────────────
-pull_pi() {
-    local name=$1
-    local dst="$LOCAL_DATA/$name/$TOPOLOGY"
-    local tag="[$name]"
+echo "Pulling '${FOLDER}' from: ${TARGETS[*]}"
+echo ""
 
-    # Check if remote path exists (uses ~/.ssh/config for user+host resolution)
-    if ! ssh $SSH_OPTS "$name" "test -d ${PI_BASE}" 2>/dev/null; then
-        echo "$tag remote path not found — skipping"
-        return 0
+# ── Pull sequentially ─────────────────────────────────────────────────────────
+failed=()
+
+for pi in "${TARGETS[@]}"; do
+    dst="$LOCAL_DATA/$pi/$FOLDER"
+
+    if ! ssh $SSH_OPTS "$pi" "test -d ${REMOTE_PATH}" 2>/dev/null; then
+        echo "[$pi] not reachable or path not found — skipping"
+        continue
     fi
 
     mkdir -p "$dst"
-    echo "$tag pulling..."
+    echo "[$pi] pulling..."
     rsync -az \
         -e "ssh $SSH_OPTS" \
-        "${name}:${PI_BASE}/" \
+        "${pi}:${REMOTE_PATH}/" \
         "$dst/"
 
-    count=$(find "$dst" -name "*.csv" 2>/dev/null | wc -l | tr -d ' ')
-    echo "$tag done  ($count CSV files) → data/$name/$TOPOLOGY/"
-}
-
-# ── Launch in parallel ─────────────────────────────────────────────────────────
-echo "Pulling from: ${TARGETS[*]}"
-echo ""
-
-declare -A pids
-for name in "${TARGETS[@]}"; do
-    pull_pi "$name" &
-    pids["$name"]=$!
+    count=$(find "$dst" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    echo "[$pi] done  ($count JSON files) → results/raw/$pi/$FOLDER/"
+    echo ""
 done
 
-# ── Collect results ────────────────────────────────────────────────────────────
-failed=()
-for name in "${!pids[@]}"; do
-    if ! wait "${pids[$name]}"; then
-        failed+=("$name")
-    fi
-done
-
-echo ""
-if [ ${#failed[@]} -gt 0 ]; then
-    echo "FAILED: ${failed[*]}"
-    exit 1
-fi
 echo "Pull complete → $LOCAL_DATA/"

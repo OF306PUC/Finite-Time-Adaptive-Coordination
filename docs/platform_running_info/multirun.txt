@@ -1,33 +1,44 @@
 ## >>> Params from each RPI's process
 curl http://localhost:3000/getParams | jq .
 
-## >>> dring & ring (30 runs, no mid-run events)
+## >>> dring-TOPOLOGY
 curl -X POST http://localhost:3000/startMultiRun \
   -H "Content-Type: application/json" \
   -d "$(curl -s http://localhost:3000/getParams | jq '. + {
-    filename: "30nodes-ring",
-    numRuns: 5,
-    runDuration: 1500000,
+    filename: "30nodes-dring-good-2nd",
+    numRuns: 1,
+    runDuration: 1600000,
     runPause: 5000
   }')"
 
-## >>> clusters (30 runs, enable nodes 21 & 30 at t=500s)
+## ring-TOPOLOGY
 curl -X POST http://localhost:3000/startMultiRun \
   -H "Content-Type: application/json" \
   -d "$(curl -s http://localhost:3000/getParams | jq '. + {
-    filename: "30nodes-clusters",
-    numRuns: 30,
-    runDuration: 600000,
+    filename: "30nodes-ring-good-2nd",
+    numRuns: 1,
+    runDuration: 1550000,
+    runPause: 5000
+  }')"
+
+## clusters-TOPOLOGY
+curl -X POST http://localhost:3000/startMultiRun \
+  -H "Content-Type: application/json" \
+  -d "$(curl -s http://localhost:3000/getParams | jq '. + {
+    filename: "30nodes-clusters-good-3rd",
+    numRuns: 3,
+    runDuration: 1550000,
     runPause: 5000,
-    midRunEvents: [{ delayMs: 500000, nodeUpdates: { "21": { "enabled": true }, "30": { "enabled": true } } }]
+    midRunEvents: [{ delayMs: 750000, nodeUpdates: { "21": { "enabled": true }, "30": { "enabled": true } } }]
   }')"
 
-## >>> Testing purposes
+
 curl -X POST http://localhost:3000/startMultiRun \
   -H "Content-Type: application/json" \
   -d "$(curl -s http://localhost:3000/getParams | jq '. + {
-    filename: "diag-test",
+    filename: "30nodes-clusters-good-4th",
     numRuns: 10,
-    runDuration: 60000,
-    runPause: 5000
+    runDuration: 1500000,
+    runPause: 5000,
+    midRunEvents: [{ delayMs: 750000, nodeUpdates: { "21": { "enabled": true }, "30": { "enabled": true } } }]
   }')"
